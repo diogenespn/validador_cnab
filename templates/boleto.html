@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Validação de linha digitável de boleto</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  >
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+    rel="stylesheet"
+  >
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="/">
+        <i class="bi bi-file-earmark-text me-2"></i>
+        Validador CNAB
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="/">
+              <i class="bi bi-hdd-network me-1"></i>
+              Validar Remessa
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="/boleto">
+              <i class="bi bi-upc-scan me-1"></i>
+              Linha Digitável
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container mb-5">
+    <div class="row">
+      <div class="col-12 col-lg-10 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h1 class="h4 mb-0">Validação de linha digitável de boleto</h1>
+          <a href="/" class="btn btn-outline-secondary btn-sm">
+            &larr; Voltar para remessa
+          </a>
+        </div>
+
+        <div class="card mb-3 shadow-sm">
+          <div class="card-header bg-white">
+            <strong><i class="bi bi-upc-scan me-2"></i>Informe a linha digitável</strong>
+          </div>
+          <div class="card-body">
+            <form method="post">
+              <div class="mb-3">
+                <label for="linha_digitavel" class="form-label">Linha digitável</label>
+                <input
+                  type="text"
+                  id="linha_digitavel"
+                  name="linha_digitavel"
+                  class="form-control"
+                  placeholder="Ex: 00190.00009 01234.567890 12345.678904 5 67890000012345"
+                  value="{{ linha_digitavel or '' }}"
+                >
+              </div>
+              <div class="form-text mb-2">
+                Você pode colar com ou sem espaços/pontos – o sistema trata automaticamente.
+              </div>
+              <div class="d-grid d-md-flex justify-content-md-end">
+                <button type="submit" class="btn btn-primary">
+                  <i class="bi bi-play-circle me-1"></i>
+                  Validar linha digitável
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {% if linha_digitavel %}
+          <div class="card mb-3">
+            <div class="card-header">
+              <strong>Resultado da validação</strong>
+            </div>
+            <div class="card-body">
+              {% if erros and erros|length > 0 %}
+                <div class="alert alert-danger mb-0">
+                  <p class="mb-1">Foram encontrados problemas:</p>
+                  <ul class="mb-0">
+                    {% for e in erros %}
+                      <li>{{ e }}</li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              {% else %}
+                <div class="alert alert-success mb-0">
+                  <i class="bi bi-check-circle-fill me-1"></i>
+                  Linha digitável válida (de acordo com os dígitos verificadores e estrutura padrão).
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          {% if infos and infos.codigo_barras %}
+            <div class="card mb-3">
+              <div class="card-header">
+                <strong>Informações do boleto</strong>
+              </div>
+              <div class="card-body">
+                <ul class="mb-0">
+                  <li><strong>Código de barras:</strong> {{ infos.codigo_barras }}</li>
+                  <li><strong>Banco:</strong> {{ infos.banco }}</li>
+                  <li><strong>Moeda:</strong> {{ infos.moeda }}</li>
+                  <li><strong>Vencimento:</strong> {{ infos.vencimento }}</li>
+                  <li><strong>Valor:</strong>
+                    {% if infos.valor_reais is not none %}
+                      R$ {{ "%.2f"|format(infos.valor_reais) }}
+                    {% else %}
+                      (não foi possível interpretar o valor)
+                    {% endif %}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
