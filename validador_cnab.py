@@ -1,4 +1,16 @@
 import os
+from collections import Counter
+from datetime import datetime, timedelta
+
+BANCOS_CNAB = {
+    "001": "Banco do Brasil",
+    "104": "Caixa Economica Federal",
+    "237": "Bradesco",
+    "341": "Itau Unibanco",
+    "033": "Santander",
+    "756": "Sicoob",
+    "748": "Sicredi",
+}
 
 # ----------------------------
 #  DETECÇÃO DE LAYOUT
@@ -45,17 +57,7 @@ def identificar_banco(header_line):
     """
     codigo = header_line[0:3]
 
-    bancos = {
-        "001": "Banco do Brasil",
-        "104": "Caixa Econômica Federal",
-        "237": "Bradesco",
-        "341": "Itaú Unibanco",
-        "033": "Santander",
-        "756": "Sicoob",
-        "748": "Sicredi",
-    }
-
-    nome = bancos.get(codigo, "Banco não mapeado neste validador")
+    nome = BANCOS_CNAB.get(codigo, "Banco não mapeado neste validador")
     return codigo, nome
 
 def _parse_data_ddmmaaaa(valor):
@@ -638,6 +640,523 @@ ESTADOS_BR = {
     "SP", "SE", "TO",
 }
 
+# ----------------------------
+#  CNAB 240 �?" Ita�� (SISDEB)
+# ----------------------------
+
+ITAU_SISDEB_TIPOS_MOEDA = {"REA", "USD", "FAJ", "IDT"}
+ITAU_SISDEB_TIPOS_MORA_REAL = {"00", "01", "03"}
+
+
+def detectar_cnab240_itau_sisdeb(linhas):
+    """
+    Detecta se o arquivo CNAB 240 do Ita�� est�� usando o layout SISDEB (segmento �??A�? nos detalhes).
+    """
+    for linha in linhas:
+        if not linha or linha.strip() == "":
+            continue
+        registro = linha.rstrip("\r\n")
+        if len(registro) < 14:
+            continue
+        tipo = registro[7:8]
+        if tipo == "3":
+            segmento = registro[13:14].upper()
+            if segmento == "A":
+                return True
+            return False
+    return False
+
+
+def _campo_posicional(linha: str, inicio: int, fim: int) -> str:
+    """
+    Retorna o trecho da linha entre as posi��es (1-based, inclusive).
+    """
+    if inicio < 1 or fim < inicio:
+        return ""
+    if len(linha) < inicio:
+        return ""
+    return linha[inicio - 1:fim]
+
+
+def _parse_decimal_str(valor: str, casas_decimais: int):
+    valor = (valor or "").strip()
+    if not valor:
+        return 0
+    if not valor.isdigit():
+        return None
+    return int(valor)
+
+
+def validar_cnab240_itau_sisdeb(linhas):
+    """
+    Valida��es espec��ficas do layout SISDEB CNAB 240 do Ita�� (segmento A).
+    Retorna um dicion��rio com erros por tipo, avisos, resumo e lista de t��tulos.
+    """
+    erros_header = []
+    erros_lotes = []
+    erros_detalhes = []
+    erros_trailer = []
+    avisos = []
+    titulos = []
+
+    resumo = {
+        "qtd_titulos": 0,
+        "valor_total_centavos": 0,
+        "valor_total_reais": 0.0,
+        "vencimento_min": None,
+        "vencimento_max": None,
+    }
+
+    header_arquivo = None
+    trailer_arquivo = None
+    total_registros_contados = 0
+    total_lotes_contados = 0
+
+    lotes_info = {}
+
+    for numero_linha, linha in enumerate(linhas, start=1):
+        if not linha or linha.strip() == "":
+            continue
+        registro = linha.rstrip("\r\n")
+        if len(registro) < 8:
+            erros_detalhes.append(
+                f"Linha {numero_linha}: registro com menos de 8 caracteres, imposs��vel identificar o tipo."
+            )
+            continue
+
+        tipo = registro[7:8]
+
+        if tipo not in {"0", "1", "3", "5", "9"}:
+            erros_detalhes.append(
+                f"Linha {numero_linha}: tipo de registro '{tipo}' n��o pertence ao layout SISDEB (0,1,3,5,9)."
+            )
+            continue
+
+        total_registros_contados += 1
+
+        if tipo == "0":
+            if header_arquivo is not None:
+                erros_header.append(
+                    f"Linha {numero_linha}: foi encontrado mais de um header de arquivo no CNAB 240."
+                )
+            header_arquivo = registro
+
+            codigo_banco = _campo_posicional(registro, 1, 3)
+            if codigo_banco != "341":
+                erros_header.append(f"Linha {numero_linha}: c��digo do banco no header deve ser 341.")
+
+            codigo_lote = _campo_posicional(registro, 4, 7)
+            if codigo_lote != "0000":
+                erros_header.append(
+                    f"Linha {numero_linha}: header de arquivo deve informar lote '0000', encontrado '{codigo_lote}'."
+                )
+
+            tipo_reg = _campo_posicional(registro, 8, 8)
+            if tipo_reg != "0":
+                erros_header.append(
+                    f"Linha {numero_linha}: header de arquivo deve ter tipo de registro '0', encontrado '{tipo_reg}'."
+                )
+
+            tipo_insc = _campo_posicional(registro, 18, 18)
+            if tipo_insc not in {"1", "2"}:
+                erros_header.append(
+                    f"Linha {numero_linha}: tipo de inscri��o da empresa (pos. 018) deve ser '1' ou '2'."
+                )
+            numero_insc = _campo_posicional(registro, 19, 32).strip()
+            if not numero_insc:
+                erros_header.append(
+                    f"Linha {numero_linha}: n��mero de inscri��o da empresa (pos. 019-032) n��o informado."
+                )
+            elif not numero_insc.isdigit():
+                erros_header.append(
+                    f"Linha {numero_linha}: n��mero de inscri��o da empresa deve ser num��rico."
+                )
+
+            convenio = _campo_posicional(registro, 33, 45).strip()
+            if not convenio:
+                erros_header.append(
+                    f"Linha {numero_linha}: c��digo do conv��nio (pos. 033-045) n��o informado."
+                )
+
+            agencia = _campo_posicional(registro, 54, 57).strip()
+            if not agencia or not agencia.isdigit():
+                erros_header.append(
+                    f"Linha {numero_linha}: ag��ncia do header (pos. 054-057) deve conter 4 d��gitos."
+                )
+            conta = _campo_posicional(registro, 66, 70).strip()
+            if not conta or not conta.isdigit():
+                erros_header.append(
+                    f"Linha {numero_linha}: conta do header (pos. 066-070) deve conter 5 d��gitos."
+                )
+
+        elif tipo == "1":
+            lote = _campo_posicional(registro, 4, 7)
+            total_lotes_contados += 1
+
+            if lote in lotes_info:
+                erros_lotes.append(
+                    f"Linha {numero_linha}: lote {lote} possui mais de um header."
+                )
+
+            lotes_info[lote] = {
+                "detalhes": 0,
+                "valor_centavos": 0,
+                "quantidade_moeda": 0,
+                "registros": 1,
+                "trailer_processado": False,
+                "linha": numero_linha,
+            }
+
+            codigo_banco = _campo_posicional(registro, 1, 3)
+            if codigo_banco != "341":
+                erros_lotes.append(
+                    f"Linha {numero_linha}: lotes do Ita�� devem ser enviados com c��digo de banco 341."
+                )
+
+            tipo_operacao = _campo_posicional(registro, 9, 9).upper()
+            if tipo_operacao != "D":
+                erros_lotes.append(
+                    f"Linha {numero_linha}: tipo de opera��o (pos. 009) deve ser 'D' para d��bitos."
+                )
+
+            tipo_servico = _campo_posicional(registro, 10, 11)
+            if tipo_servico != "05":
+                erros_lotes.append(
+                    f"Linha {numero_linha}: tipo de servi��o no header de lote (pos. 010-011) deve ser '05'."
+                )
+
+            forma_lcto = _campo_posicional(registro, 12, 13)
+            if forma_lcto != "50":
+                erros_lotes.append(
+                    f"Linha {numero_linha}: forma de lan��amento (pos. 012-013) deve ser '50'."
+                )
+
+            versao_layout = _campo_posicional(registro, 14, 16)
+            if versao_layout != "030":
+                avisos.append(
+                    f"Linha {numero_linha}: vers��o do layout no header de lote (pos. 014-016) deveria ser '030'."
+                )
+
+            tipo_insc = _campo_posicional(registro, 18, 18)
+            if tipo_insc not in {"1", "2"}:
+                erros_lotes.append(
+                    f"Linha {numero_linha}: tipo de inscri��o da empresa creditada (pos. 018) deve ser '1' ou '2'."
+                )
+
+            numero_insc = _campo_posicional(registro, 19, 32).strip()
+            if not numero_insc or not numero_insc.isdigit():
+                erros_lotes.append(
+                    f"Linha {numero_linha}: n��mero de inscri��o (pos. 019-032) do header de lote deve ser num��rico."
+                )
+
+            convenio = _campo_posicional(registro, 33, 45).strip()
+            if not convenio:
+                erros_lotes.append(
+                    f"Linha {numero_linha}: conv��nio (pos. 033-045) no header de lote n��o informado."
+                )
+
+            agencia = _campo_posicional(registro, 54, 57).strip()
+            conta = _campo_posicional(registro, 66, 70).strip()
+            if not agencia or not agencia.isdigit():
+                erros_lotes.append(
+                    f"Linha {numero_linha}: ag��ncia no header de lote (pos. 054-057) deve conter 4 d��gitos."
+                )
+            if not conta or not conta.isdigit():
+                erros_lotes.append(
+                    f"Linha {numero_linha}: conta no header de lote (pos. 066-070) deve conter 5 d��gitos."
+                )
+
+        elif tipo == "3":
+            lote = _campo_posicional(registro, 4, 7)
+            info_lote = lotes_info.get(lote)
+            if not info_lote:
+                erros_detalhes.append(
+                    f"Linha {numero_linha}: registro detalhe do lote {lote} sem header correspondente."
+                )
+                continue
+
+            info_lote["detalhes"] += 1
+            info_lote["registros"] += 1
+
+            segmento = _campo_posicional(registro, 14, 14).upper()
+            if segmento != "A":
+                erros_detalhes.append(
+                    f"Linha {numero_linha}: segmento nos detalhes deve ser 'A', encontrado '{segmento}'."
+                )
+
+            codigo_mov = _campo_posicional(registro, 15, 17).strip()
+            if not codigo_mov or not codigo_mov.isdigit():
+                erros_detalhes.append(
+                    f"Linha {numero_linha}: c��digo da instru��o para movimento (pos. 015-017) deve conter 3 d��gitos."
+                )
+
+            camera = _campo_posicional(registro, 18, 20)
+            if camera != "000":
+                erros_detalhes.append(
+                    f"Linha {numero_linha}: c��digo da c��mara (pos. 018-020) deve ser '000'."
+                )
+
+            codigo_banco = _campo_posicional(registro, 21, 23)
+            if codigo_banco != "341":
+                erros_detalhes.append(
+                    f"Linha {numero_linha}: c��digo do banco (pos. 021-023) deve ser 341."
+                )
+
+            agencia_debitada = _campo_posicional(registro, 25, 28).strip()
+            conta_debitada = _campo_posicional(registro, 37, 41).strip()
+            dac = _campo_posicional(registro, 43, 43).strip()
+            if not agencia_debitada or not agencia_debitada.isdigit():
+                erros_detalhes.append(
+                    f"Linha {numero_linha}: ag��ncia debitada (pos. 025-028) deve ser num��rica."
+                )
+            if not conta_debitada or not conta_debitada.isdigit():
+                erros_detalhes.append(
+                    f"Linha {numero_linha}: conta debitada (pos. 037-041) deve ser num��rica."
+                )
+            if dac and not dac.isdigit():
+                erros_detalhes.append(
+                    f"Linha {numero_linha}: DAC da ag��ncia/conta (pos. 043) deve ser num��rico."
+                )
+
+            nome_debitado = _campo_posicional(registro, 44, 73).strip()
+            if not nome_debitado:
+                erros_detalhes.append(
+                    f"Linha {numero_linha}: nome do debitado (pos. 044-073) n��o informado."
+                )
+
+            seu_numero = _campo_posicional(registro, 74, 88).strip()
+            data_agendada_raw = _campo_posicional(registro, 94, 101)
+            data_agendada = _parse_data_ddmmaaaa(data_agendada_raw)
+            if not data_agendada:
+                erros_detalhes.append(
+                    f"Linha {numero_linha}: data agendada (pos. 094-101) inv��lida."
+                )
+
+            tipo_moeda = _campo_posicional(registro, 102, 104).strip().upper()
+            if tipo_moeda not in ITAU_SISDEB_TIPOS_MOEDA:
+                erros_detalhes.append(
+                    f"Linha {numero_linha}: tipo de moeda (pos. 102-104) deve ser um dos valores permitidos ({', '.join(sorted(ITAU_SISDEB_TIPOS_MOEDA))})."
+                )
+
+            quantidade_raw = _campo_posicional(registro, 105, 119)
+            quantidade_valor = _parse_decimal_str(quantidade_raw, 5)
+            if quantidade_valor is None:
+                erros_detalhes.append(
+                    f"Linha {numero_linha}: quantidade/IOF (pos. 105-119) deve conter apenas d��gitos."
+                )
+                quantidade_valor = 0
+
+            valor_raw = _campo_posicional(registro, 120, 134)
+            valor_centavos = _parse_decimal_str(valor_raw, 2)
+            if valor_centavos is None:
+                erros_detalhes.append(
+                    f"Linha {numero_linha}: valor agendado (pos. 120-134) deve conter apenas d��gitos."
+                )
+                valor_centavos = 0
+
+            if tipo_moeda == "REA" and valor_centavos == 0:
+                erros_detalhes.append(
+                    f"Linha {numero_linha}: para moeda 'REA', o valor agendado deve ser maior que zero."
+                )
+
+            if tipo_moeda != "REA" and quantidade_valor == 0:
+                avisos.append(
+                    f"Linha {numero_linha}: para moeda diferente de 'REA', o campo quantidade (pos. 105-119) deveria conter o valor a debitar."
+                )
+
+            nosso_numero = _campo_posicional(registro, 135, 154).strip()
+            if nosso_numero:
+                avisos.append(
+                    f"Linha {numero_linha}: o campo Nosso N��mero (pos. 135-154) deve ficar em branco na remessa SISDEB."
+                )
+
+            data_cobrada = _campo_posicional(registro, 155, 162).strip()
+            if data_cobrada:
+                avisos.append(
+                    f"Linha {numero_linha}: data cobrada (pos. 155-162) deve permanecer em branco na remessa."
+                )
+            valor_cobrado_raw = _campo_posicional(registro, 163, 177).strip()
+            if valor_cobrado_raw and valor_cobrado_raw.strip("0") != "":
+                avisos.append(
+                    f"Linha {numero_linha}: valor cobrado (pos. 163-177) deve permanecer zerado na remessa."
+                )
+
+            tipo_mora = _campo_posicional(registro, 178, 179).strip()
+            valor_mora_raw = _campo_posicional(registro, 180, 196)
+            valor_mora = _parse_decimal_str(valor_mora_raw, 5)
+            if valor_mora is None:
+                erros_detalhes.append(
+                    f"Linha {numero_linha}: valor da mora (pos. 180-196) deve conter apenas d��gitos."
+                )
+                valor_mora = 0
+
+            if tipo_moeda == "REA":
+                if tipo_mora not in ITAU_SISDEB_TIPOS_MORA_REAL:
+                    erros_detalhes.append(
+                        f"Linha {numero_linha}: tipo da mora (pos. 178-179) deve ser 00, 01 ou 03 para moeda 'REA'."
+                    )
+                if tipo_mora == "00" and valor_mora != 0:
+                    erros_detalhes.append(
+                        f"Linha {numero_linha}: tipo da mora '00' exige valor de mora zerado."
+                    )
+            else:
+                if tipo_mora and not tipo_mora.isdigit():
+                    erros_detalhes.append(
+                        f"Linha {numero_linha}: tipo da mora (pos. 178-179) deve ser num��rico."
+                    )
+
+            documento_debitado = _campo_posicional(registro, 217, 230).strip()
+            if not documento_debitado or not documento_debitado.isdigit():
+                erros_detalhes.append(
+                    f"Linha {numero_linha}: n��mero de inscri��o do debitado (pos. 217-230) deve ser num��rico."
+                )
+
+            ocorrencias = _campo_posicional(registro, 231, 240).strip()
+            if ocorrencias:
+                avisos.append(
+                    f"Linha {numero_linha}: campo de ocorr��ncias (pos. 231-240) deve permanecer em branco na remessa."
+                )
+
+            info_lote["valor_centavos"] += valor_centavos
+            info_lote["quantidade_moeda"] += quantidade_valor
+
+            resumo["qtd_titulos"] += 1
+            resumo["valor_total_centavos"] += valor_centavos
+
+            if data_agendada:
+                if resumo["vencimento_min"] is None or data_agendada < resumo["vencimento_min"]:
+                    resumo["vencimento_min"] = data_agendada
+                if resumo["vencimento_max"] is None or data_agendada > resumo["vencimento_max"]:
+                    resumo["vencimento_max"] = data_agendada
+
+            titulos.append(
+                {
+                    "lote": lote,
+                    "sequencia": _campo_posicional(registro, 9, 13).strip(),
+                    "nosso_numero": nosso_numero or "",
+                    "seu_numero": seu_numero or "",
+                    "data_vencimento_str": _formatar_data_br(data_agendada),
+                    "valor_centavos": valor_centavos,
+                    "valor_reais": valor_centavos / 100.0,
+                    "sacado_documento": documento_debitado,
+                    "sacado_nome": nome_debitado,
+                    "sacado_endereco": "",
+                    "sacado_bairro": "",
+                    "sacado_cep": "",
+                    "sacado_cidade": "",
+                    "sacado_uf": "",
+                    "itau_tipo_moeda": tipo_moeda,
+                    "itau_quantidade_moeda": quantidade_valor,
+                    "itau_codigo_movimento": codigo_mov,
+                    "itau_agencia_debitada": agencia_debitada,
+                    "itau_conta_debitada": conta_debitada,
+                }
+            )
+
+        elif tipo == "5":
+            lote = _campo_posicional(registro, 4, 7)
+            info_lote = lotes_info.get(lote)
+            if not info_lote:
+                erros_trailer.append(
+                    f"Linha {numero_linha}: trailer do lote {lote} encontrado sem header correspondente."
+                )
+                continue
+
+            info_lote["registros"] += 1
+            info_lote["trailer_processado"] = True
+
+            qtd_registros = _campo_posicional(registro, 18, 23).strip()
+            if not qtd_registros or not qtd_registros.isdigit():
+                erros_trailer.append(
+                    f"Linha {numero_linha}: quantidade de registros (pos. 018-023) deve ser num��rica."
+                )
+            else:
+                if int(qtd_registros) != info_lote["registros"]:
+                    erros_trailer.append(
+                        f"Linha {numero_linha}: lote {lote} informa {int(qtd_registros)} registros no trailer, mas foram encontrados {info_lote['registros']} (header + detalhes + trailer)."
+                    )
+
+            total_valor_raw = _campo_posicional(registro, 24, 41).strip()
+            total_valor = _parse_decimal_str(total_valor_raw, 2)
+            if total_valor is None:
+                erros_trailer.append(
+                    f"Linha {numero_linha}: total de valores (pos. 024-041) deve conter apenas d��gitos."
+                )
+            else:
+                if total_valor != info_lote["valor_centavos"]:
+                    erros_trailer.append(
+                        f"Linha {numero_linha}: soma dos valores do lote {lote} (R$ {info_lote['valor_centavos'] / 100:.2f}) difere do total informado no trailer."
+                    )
+
+            total_quantidade_raw = _campo_posicional(registro, 42, 59).strip()
+            total_quantidade = _parse_decimal_str(total_quantidade_raw, 5)
+            if total_quantidade is None:
+                erros_trailer.append(
+                    f"Linha {numero_linha}: total da quantidade de moedas (pos. 042-059) deve conter apenas d��gitos."
+                )
+            else:
+                if total_quantidade != info_lote["quantidade_moeda"]:
+                    erros_trailer.append(
+                        f"Linha {numero_linha}: somat��rio da quantidade/IOF do lote {lote} difere do informado no trailer."
+                    )
+
+        elif tipo == "9":
+            if trailer_arquivo is not None:
+                erros_trailer.append("Foram encontrados dois trailers de arquivo (tipo 9).")
+            trailer_arquivo = registro
+
+    if header_arquivo is None:
+        erros_header.append("Arquivo CNAB 240 do Ita�� sem header (tipo 0).")
+
+    if trailer_arquivo is None:
+        erros_trailer.append("Arquivo CNAB 240 do Ita�� sem trailer (tipo 9).")
+    else:
+        codigo_lote = _campo_posicional(trailer_arquivo, 4, 7)
+        if codigo_lote != "9999":
+            erros_trailer.append(
+                "Trailer de arquivo (pos. 004-007) deve conter '9999'."
+            )
+
+        qtd_lotes = _campo_posicional(trailer_arquivo, 18, 23).strip()
+        if qtd_lotes and qtd_lotes.isdigit():
+            if int(qtd_lotes) != total_lotes_contados:
+                erros_trailer.append(
+                    f"Trailer do arquivo informa {int(qtd_lotes)} lotes, mas foram encontrados {total_lotes_contados} headers de lote."
+                )
+        else:
+            erros_trailer.append(
+                "Trailer do arquivo deve informar a quantidade de lotes (pos. 018-023)."
+            )
+
+        qtd_registros = _campo_posicional(trailer_arquivo, 24, 29).strip()
+        if qtd_registros and qtd_registros.isdigit():
+            if int(qtd_registros) != total_registros_contados:
+                erros_trailer.append(
+                    f"Trailer do arquivo informa {int(qtd_registros)} registros, mas foram encontrados {total_registros_contados} do tipo 0/1/3/5/9."
+                )
+        else:
+            erros_trailer.append(
+                "Trailer do arquivo deve informar a quantidade de registros (pos. 024-029)."
+            )
+
+    for lote, info in lotes_info.items():
+        if not info["trailer_processado"]:
+            erros_trailer.append(
+                f"O lote {lote} n��o possui trailer (registro tipo 5)."
+            )
+
+    resumo["valor_total_reais"] = resumo["valor_total_centavos"] / 100.0
+
+    return {
+        "erros_header": erros_header,
+        "erros_lotes": erros_lotes,
+        "erros_detalhes": erros_detalhes,
+        "erros_trailer": erros_trailer,
+        "avisos": avisos,
+        "titulos": titulos,
+        "resumo": resumo,
+    }
+
 # start/end são índices Python (0-based), end é exclusivo
 # Layout comum FEBRABAN para Segmentos P e Q (usado pela maioria dos bancos)
 LAYOUT_CNAB240_COMUM_PQ = {
@@ -745,8 +1264,6 @@ def limpar_numero(s: str) -> str:
     Remove todos os caracteres que não são dígitos.
     """
     return "".join(ch for ch in (s or "") if ch.isdigit())
-
-from datetime import datetime, timedelta
 
 def validar_cpf(cpf: str) -> bool:
     cpf = limpar_numero(cpf)
@@ -969,7 +1486,7 @@ def validar_segmentos_por_layout(codigo_banco, linhas):
 
     return erros, avisos
 
-def validar_dados_cedente_vs_arquivo(codigo_banco: str, linhas, dados_conta):
+def validar_dados_cedente_vs_arquivo(codigo_banco: str, linhas, dados_conta, layout: int = 240):
     """
     Compara os dados informados pelo usuário (banco, agência, conta, documento, nome)
     com o que está no arquivo de remessa.
@@ -1009,77 +1526,134 @@ def validar_dados_cedente_vs_arquivo(codigo_banco: str, linhas, dados_conta):
 
     # --- Banco do Brasil (001) ---
 
-    # Header de arquivo = primeira linha
-    header = linhas[0].rstrip("\r\n")
+    if layout == 240:
+        # Header de arquivo = primeira linha
+        header = linhas[0].rstrip("\r\n")
 
-    # CNPJ do cedente no header (índices 17-30 -> pos. 18-31)
-    cnpj_arquivo = header[17:31].strip() if len(header) >= 31 else ""
-    # Nome do cedente (índices 72-101 -> pos. 73-102), 30 caracteres
-    nome_cedente_arquivo = header[72:102].strip() if len(header) >= 102 else ""
+        # CNPJ do cedente no header (índices 17-30 -> pos. 18-31)
+        cnpj_arquivo = header[17:31].strip() if len(header) >= 31 else ""
+        # Nome do cedente (índices 72-101 -> pos. 73-102), 30 caracteres
+        nome_cedente_arquivo = header[72:102].strip() if len(header) >= 102 else ""
 
-    # Documento informado (CPF/CNPJ)
-    doc_inf = limpar_numero(dados_conta.get("documento", ""))
-    doc_arq = limpar_numero(cnpj_arquivo)
+        # Documento informado (CPF/CNPJ)
+        doc_inf = limpar_numero(dados_conta.get("documento", ""))
+        doc_arq = limpar_numero(cnpj_arquivo)
 
-    if doc_inf and doc_arq and doc_inf != doc_arq:
-        erros.append(
-            f"Documento do titular informado ({doc_inf}) é diferente do documento do cedente no arquivo ({doc_arq})."
-        )
-
-    # Nome informado x nome no arquivo (cedente)
-    nome_inf = (dados_conta.get("nome") or "").strip()
-    if nome_inf and nome_cedente_arquivo:
-        nome_inf_upper = nome_inf.upper()
-        nome_arq_upper = nome_cedente_arquivo.upper()
-        # Se um não contém o outro (considerando possíveis truncamentos), consideramos divergência leve (aviso)
-        if nome_inf_upper not in nome_arq_upper and nome_arq_upper not in nome_inf_upper:
-            avisos.append(
-                "Nome/Razão social informada difere do nome do cedente no arquivo: "
-                f"informado '{nome_inf}', arquivo '{nome_cedente_arquivo}'."
+        if doc_inf and doc_arq and doc_inf != doc_arq:
+            erros.append(
+                f"Documento do titular informado ({doc_inf}) é diferente do documento do cedente no arquivo ({doc_arq})."
             )
 
-    # Procurar primeiro header de lote (tipo de registro = '1')
-    header_lote = None
-    for linha in linhas[1:]:
-        linha_limpa = linha.rstrip("\r\n")
-        if len(linha_limpa) >= 8 and linha_limpa[7:8] == "1":
-            header_lote = linha_limpa
-            break
+        # Nome informado x nome no arquivo (cedente)
+        nome_inf = (dados_conta.get("nome") or "").strip()
+        if nome_inf and nome_cedente_arquivo:
+            nome_inf_upper = nome_inf.upper()
+            nome_arq_upper = nome_cedente_arquivo.upper()
+            # Se um não contém o outro (considerando possíveis truncamentos), consideramos divergência leve (aviso)
+            if nome_inf_upper not in nome_arq_upper and nome_arq_upper not in nome_inf_upper:
+                avisos.append(
+                    "Nome/Razão social informada difere do nome do cedente no arquivo: "
+                    f"informado '{nome_inf}', arquivo '{nome_cedente_arquivo}'."
+                )
 
-    if header_lote:
-        # No BB CNAB 240, header de lote:
-        # Agência mantenedora da conta: índices 53-57 (5 dígitos)
-        # DV agência: índice 58
-        # Conta: índices 59-70 (12 dígitos)
-        # DV conta: índice 71
-        if len(header_lote) >= 72:
-            agencia_arq_raw = header_lote[53:58]
-            conta_arq_raw = header_lote[59:71]
+        # Procurar primeiro header de lote (tipo de registro = '1')
+        header_lote = None
+        for linha in linhas[1:]:
+            linha_limpa = linha.rstrip("\r\n")
+            if len(linha_limpa) >= 8 and linha_limpa[7:8] == "1":
+                header_lote = linha_limpa
+                break
 
-            agencia_arq = limpar_numero(agencia_arq_raw)
-            conta_arq = limpar_numero(conta_arq_raw)
+        if header_lote:
+            # No BB CNAB 240, header de lote:
+            # Agência mantenedora da conta: índices 53-57 (5 dígitos)
+            # DV agência: índice 58
+            # Conta: índices 59-70 (12 dígitos)
+            # DV conta: índice 71
+            if len(header_lote) >= 72:
+                agencia_arq_raw = header_lote[53:58]
+                conta_arq_raw = header_lote[59:71]
 
-            # Agência
-            ag_inf = limpar_numero(dados_conta.get("agencia", ""))
-            if ag_inf and agencia_arq:
-                if ag_inf.lstrip("0") != agencia_arq.lstrip("0"):
-                    erros.append(
-                        f"Agência informada ({ag_inf}) é diferente da agência no arquivo ({agencia_arq})."
-                    )
+                agencia_arq = limpar_numero(agencia_arq_raw)
+                conta_arq = limpar_numero(conta_arq_raw)
 
-            # Conta
-            conta_inf = limpar_numero(dados_conta.get("conta", ""))
-            if conta_inf and conta_arq:
-                if conta_inf.lstrip("0") != conta_arq.lstrip("0"):
-                    erros.append(
-                        f"Conta informada ({conta_inf}) é diferente da conta no arquivo ({conta_arq})."
-                    )
+                # Agência
+                ag_inf = limpar_numero(dados_conta.get("agencia", ""))
+                if ag_inf and agencia_arq:
+                    if ag_inf.lstrip("0") != agencia_arq.lstrip("0"):
+                        erros.append(
+                            f"Agência informada ({ag_inf}) é diferente da agência no arquivo ({agencia_arq})."
+                        )
+
+                # Conta
+                conta_inf = limpar_numero(dados_conta.get("conta", ""))
+                if conta_inf and conta_arq:
+                    if conta_inf.lstrip("0") != conta_arq.lstrip("0"):
+                        erros.append(
+                            f"Conta informada ({conta_inf}) é diferente da conta no arquivo ({conta_arq})."
+                        )
+            else:
+                avisos.append(
+                    "Header de lote encontrado, mas muito curto para ler agência/conta."
+                )
         else:
-            avisos.append(
-                "Header de lote encontrado, mas muito curto para ler agência/conta."
+            avisos.append("Nenhum Header de Lote (tipo 1) encontrado para validar agência/conta.")
+    elif layout == 400:
+        header = None
+        for linha in linhas:
+            linha_limpa = linha.rstrip("\r\n")
+            if linha_limpa and linha_limpa[0:1] == "0":
+                header = linha_limpa
+                break
+
+        if not header:
+            avisos.append("Não foi possível localizar o header do arquivo CNAB 400 para validar os dados do cedente.")
+            return erros, avisos
+
+        agencia_arq = _campo_cnab400(header, 27, 30).strip()
+        conta_arq = _campo_cnab400(header, 32, 39).strip()
+        nome_cedente_arquivo = _campo_cnab400(header, 47, 76).strip()
+
+        doc_arq = ""
+        for linha in linhas:
+            linha_limpa = linha.rstrip("\r\n")
+            if linha_limpa and linha_limpa[0:1] == "7":
+                doc_arq = limpar_numero(_campo_cnab400(linha_limpa, 4, 17))
+                break
+
+        doc_inf = limpar_numero(dados_conta.get("documento", ""))
+        if doc_inf and doc_arq and doc_inf != doc_arq:
+            erros.append(
+                f"Documento do titular informado ({doc_inf}) é diferente do documento do beneficiário no arquivo ({doc_arq})."
             )
+
+        nome_inf = (dados_conta.get("nome") or "").strip()
+        if nome_inf and nome_cedente_arquivo:
+            nome_inf_upper = nome_inf.upper()
+            nome_arq_upper = nome_cedente_arquivo.upper()
+            if nome_inf_upper not in nome_arq_upper and nome_arq_upper not in nome_inf_upper:
+                avisos.append(
+                    "Nome/Razão social informada difere do nome do cedente no header: "
+                    f"informado '{nome_inf}', arquivo '{nome_cedente_arquivo}'."
+                )
+
+        ag_inf = limpar_numero(dados_conta.get("agencia", ""))
+        if ag_inf and agencia_arq:
+            if ag_inf.lstrip("0") != agencia_arq.lstrip("0"):
+                erros.append(
+                    f"Agência informada ({ag_inf}) é diferente da agência do header ({agencia_arq})."
+                )
+
+        conta_inf = limpar_numero(dados_conta.get("conta", ""))
+        if conta_inf and conta_arq:
+            if conta_inf.lstrip("0") != conta_arq.lstrip("0"):
+                erros.append(
+                    f"Conta informada ({conta_inf}) é diferente da conta do header ({conta_arq})."
+                )
     else:
-        avisos.append("Nenhum Header de Lote (tipo 1) encontrado para validar agência/conta.")
+        avisos.append(
+            f"Validação dos dados informados ainda não está disponível para o layout CNAB {layout}."
+        )
 
     return erros, avisos
 
@@ -2261,6 +2835,793 @@ def validar_segmentos_avancados_bb(linhas):
 #  PROGRAMA PRINCIPAL
 # ----------------------------
 
+# ----------------------------
+#  CNAB 400 - Banco do Brasil
+# ----------------------------
+
+CNAB400_BB_CARTEIRAS_VALIDAS = {"11", "12", "15", "17", "31", "51"}
+CNAB400_BB_TIPOS_COBRANCA = {
+    "11": {"", "04DSC", "08VDR", "02VIN"},
+    "12": {""},
+    "15": {""},
+    "17": {"", "04DSC", "08VDR", "02VIN", "03SEG"},
+    "31": {""},
+    "51": {""},
+}
+CNAB400_BB_COMANDOS_VALIDOS = {
+    "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12",
+    "16", "31", "32", "33", "34", "35", "36",
+}
+CNAB400_BB_ESPECIES_VALIDAS = {
+    "01", "02", "03", "05", "08", "09", "10", "12", "13", "15", "25", "26", "27", "31", "32",
+}
+CNAB400_BB_TIPOS_INSCRICAO_BENEF = {"01", "02"}
+CNAB400_BB_TIPOS_INSCRICAO_PAGADOR = {"00", "01", "02"}
+CNAB400_BB_INDICADOR_PARCIAL = {"", "N", "S"}
+CNAB400_BB_AGENTES_NEGATIVACAO = {
+    "10": "Serasa",
+    "11": "Quod",
+}
+CNAB400_BB_DIAS_PROTESTO_VALIDOS = set(range(6, 30)) | {35, 40}
+
+
+def _campo_cnab400(linha: str, pos_inicio: int, pos_fim: int) -> str:
+    """
+    Retorna o trecho da linha entre as posições informadas (1-based, inclusive).
+    """
+    if pos_inicio < 1 or pos_fim < pos_inicio:
+        return ""
+    if len(linha) < pos_inicio:
+        return ""
+    fim = min(pos_fim, len(linha))
+    return linha[pos_inicio - 1:fim]
+
+
+def _parse_data_cnab400(valor: str):
+    valor = (valor or "").strip()
+    if not valor or valor == "000000" or len(valor) != 6 or not valor.isdigit():
+        return None
+    dia = int(valor[0:2])
+    mes = int(valor[2:4])
+    ano = int(valor[4:6])
+    ano_full = 1900 + ano if ano >= 70 else 2000 + ano
+    try:
+        return datetime(ano_full, mes, dia)
+    except ValueError:
+        return None
+
+
+def _formatar_data_br(dt):
+    if not dt:
+        return None
+    return dt.strftime("%d/%m/%Y")
+
+
+def _parse_valor_cnab400(raw: str):
+    raw = (raw or "").strip()
+    if not raw:
+        return 0
+    if not raw.isdigit():
+        return None
+    return int(raw)
+
+
+def _validar_header_cnab400_bb(linha: str, numero_linha: int):
+    erros = []
+    avisos = []
+    info = {
+        "linha": numero_linha,
+        "agencia": "",
+        "agencia_dv": "",
+        "conta": "",
+        "conta_dv": "",
+        "nome_beneficiario": "",
+        "numero_convenio_lider": "",
+        "data_gravacao": None,
+        "sequencial_remessa": "",
+        "codigo_banco": "",
+        "nome_banco": "",
+    }
+
+    if linha[0:1] != "0":
+        erros.append(
+            f"Linha {numero_linha}: header CNAB 400 deve começar com '0', encontrado '{linha[0:1]}'."
+        )
+
+    if _campo_cnab400(linha, 2, 2) != "1":
+        erros.append(
+            f"Linha {numero_linha}: tipo de operação (pos. 002) deve ser '1' para remessa."
+        )
+
+    tipo_extenso = _campo_cnab400(linha, 3, 9).strip().upper()
+    if tipo_extenso not in {"REMESSA", "TESTE"}:
+        avisos.append(
+            f"Linha {numero_linha}: identificação por extenso do tipo de operação (pos. 003-009) não está como 'REMESSA' ou 'TESTE'."
+        )
+
+    if _campo_cnab400(linha, 10, 11) != "01":
+        erros.append(
+            f"Linha {numero_linha}: tipo de serviço (pos. 010-011) deve ser '01'."
+        )
+
+    if _campo_cnab400(linha, 12, 19).strip().upper() != "COBRANCA":
+        avisos.append(
+            f"Linha {numero_linha}: descrição do serviço (pos. 012-019) diferente de 'COBRANCA'."
+        )
+
+    complemento = _campo_cnab400(linha, 20, 26)
+    if complemento.strip():
+        avisos.append(
+            f"Linha {numero_linha}: complemento do registro (pos. 020-026) deveria estar em branco."
+        )
+
+    agencia = _campo_cnab400(linha, 27, 30).strip()
+    if not agencia or not agencia.isdigit():
+        erros.append(
+            f"Linha {numero_linha}: prefixo da agência (pos. 027-030) deve conter 4 dígitos."
+        )
+    info["agencia"] = agencia
+
+    agencia_dv = _campo_cnab400(linha, 31, 31).strip()
+    if not agencia_dv:
+        erros.append(f"Linha {numero_linha}: DV da agência (pos. 031) não informado.")
+    info["agencia_dv"] = agencia_dv
+
+    conta = _campo_cnab400(linha, 32, 39).strip()
+    if not conta or not conta.isdigit():
+        erros.append(
+            f"Linha {numero_linha}: conta corrente (pos. 032-039) deve conter 8 dígitos."
+        )
+    info["conta"] = conta
+
+    conta_dv = _campo_cnab400(linha, 40, 40).strip()
+    if not conta_dv:
+        erros.append(f"Linha {numero_linha}: DV da conta corrente (pos. 040) não informado.")
+    info["conta_dv"] = conta_dv
+
+    if _campo_cnab400(linha, 41, 46) != "000000":
+        erros.append(
+            f"Linha {numero_linha}: complemento do registro (pos. 041-046) deve estar com '000000'."
+        )
+
+    nome_benef = _campo_cnab400(linha, 47, 76).strip()
+    if not nome_benef:
+        erros.append(
+            f"Linha {numero_linha}: nome do beneficiário (pos. 047-076) não pode ficar em branco."
+        )
+    info["nome_beneficiario"] = nome_benef
+
+    banco_raw = _campo_cnab400(linha, 77, 94)
+    codigo_banco = banco_raw[0:3]
+    if not codigo_banco.isdigit():
+        erros.append(
+            f"Linha {numero_linha}: código do banco (pos. 077-079) deve conter 3 dígitos."
+        )
+    info["codigo_banco"] = codigo_banco
+    info["nome_banco"] = BANCOS_CNAB.get(codigo_banco, "Banco não mapeado neste validador")
+    if not banco_raw.strip().startswith(codigo_banco):
+        avisos.append(
+            f"Linha {numero_linha}: campo 001BANCODOBRASIL (pos. 077-094) está com conteúdo inesperado."
+        )
+
+    data_grav_raw = _campo_cnab400(linha, 95, 100)
+    data_gravacao = _parse_data_cnab400(data_grav_raw)
+    if not data_gravacao:
+        erros.append(
+            f"Linha {numero_linha}: data de gravação (pos. 095-100) deve estar em DDMMAA."
+        )
+    info["data_gravacao"] = data_gravacao
+
+    seq_remessa = _campo_cnab400(linha, 101, 107).strip()
+    if not seq_remessa or not seq_remessa.isdigit():
+        erros.append(
+            f"Linha {numero_linha}: sequencial da remessa (pos. 101-107) deve conter dígitos."
+        )
+    info["sequencial_remessa"] = seq_remessa
+
+    info["numero_convenio_lider"] = _campo_cnab400(linha, 130, 136).strip()
+    if info["numero_convenio_lider"] and not info["numero_convenio_lider"].isdigit():
+        erros.append(
+            f"Linha {numero_linha}: número do convênio líder (pos. 130-136) deve ser numérico."
+        )
+
+    seq_reg = _campo_cnab400(linha, 395, 400).strip()
+    if seq_reg != "000001":
+        avisos.append(
+            f"Linha {numero_linha}: sequência do registro no header (pos. 395-400) deveria ser '000001'."
+        )
+
+    return info, erros, avisos
+
+
+def _validar_trailer_cnab400_bb(linha: str, numero_linha: int, ultimo_seq: int):
+    erros = []
+    avisos = []
+    if linha[0:1] != "9":
+        erros.append(
+            f"Linha {numero_linha}: trailer CNAB 400 deve começar com '9'."
+        )
+    complemento = _campo_cnab400(linha, 2, 394)
+    if complemento.strip():
+        avisos.append(
+            f"Linha {numero_linha}: trailer (pos. 002-394) deveria estar em branco."
+        )
+    seq = _campo_cnab400(linha, 395, 400).strip()
+    if not seq or not seq.isdigit():
+        erros.append(
+            f"Linha {numero_linha}: sequência do trailer (pos. 395-400) deve conter 6 dígitos."
+        )
+    else:
+        seq_int = int(seq)
+        if ultimo_seq and seq_int != ultimo_seq:
+            erros.append(
+                f"Linha {numero_linha}: sequência do trailer é {seq}, mas o último registro anterior indicava {ultimo_seq:06d}."
+            )
+    return erros, avisos
+
+
+def _validar_registro_detalhe_cnab400_bb(linha: str, numero_linha: int, header_info):
+    erros = []
+    avisos = []
+    detalhe = {
+        "linha": numero_linha,
+        "sequencial_registro": _campo_cnab400(linha, 395, 400).strip(),
+        "tipo_inscricao_beneficiario": "",
+        "documento_beneficiario": "",
+        "agencia": _campo_cnab400(linha, 18, 21).strip(),
+        "agencia_dv": _campo_cnab400(linha, 22, 22).strip(),
+        "conta": _campo_cnab400(linha, 23, 30).strip(),
+        "conta_dv": _campo_cnab400(linha, 31, 31).strip(),
+        "convenio_cobranca": _campo_cnab400(linha, 32, 38).strip(),
+        "nosso_numero": _campo_cnab400(linha, 64, 80).strip(),
+        "carteira": _campo_cnab400(linha, 107, 108).strip(),
+        "variacao_carteira": _campo_cnab400(linha, 92, 94).strip(),
+        "tipo_cobranca": _campo_cnab400(linha, 102, 106).strip().upper(),
+        "comando": _campo_cnab400(linha, 109, 110).strip(),
+        "seu_numero": _campo_cnab400(linha, 111, 120).strip(),
+        "seu_numero_15": None,
+        "data_vencimento": None,
+        "data_vencimento_str": None,
+        "valor_centavos": 0,
+        "valor_reais": 0.0,
+        "numero_banco": _campo_cnab400(linha, 140, 142).strip(),
+        "agencia_cobradora": _campo_cnab400(linha, 143, 146).strip(),
+        "nome_pagador": _campo_cnab400(linha, 235, 271).strip(),
+        "documento_pagador": limpar_numero(_campo_cnab400(linha, 221, 234)),
+        "tipo_inscricao_pagador": _campo_cnab400(linha, 219, 220).strip(),
+        "endereco_pagador": _campo_cnab400(linha, 275, 314).strip(),
+        "bairro_pagador": _campo_cnab400(linha, 315, 326).strip(),
+        "cidade_pagador": _campo_cnab400(linha, 335, 349).strip(),
+        "uf_pagador": _campo_cnab400(linha, 350, 351).strip().upper(),
+        "cep_pagador": _campo_cnab400(linha, 327, 334).strip(),
+        "observacoes": _campo_cnab400(linha, 352, 391).strip(),
+        "instrucao1": _campo_cnab400(linha, 157, 158).strip(),
+        "instrucao2": _campo_cnab400(linha, 159, 160).strip(),
+        "juros_centavos": 0,
+        "juros_reais": 0.0,
+        "desconto_data_str": None,
+        "desconto_valor_centavos": 0,
+        "desconto_valor_reais": 0.0,
+        "multa_codigo": None,
+        "multa_data_str": None,
+        "multa_valor_centavos": 0,
+        "multa_valor_reais": 0.0,
+        "valor_abatimento_centavos": 0,
+        "valor_abatimento_reais": 0.0,
+        "valor_iof_centavos": 0,
+        "valor_iof_reais": 0.0,
+        "data_emissao_str": None,
+        "indicador_recebimento_parcial": _campo_cnab400(linha, 394, 394).strip().upper(),
+        "dias_protesto": _campo_cnab400(linha, 392, 393).strip(),
+        "agente_negativador": None,
+        "emails_pagador": [],
+        "opcional_desc2_data_str": None,
+        "opcional_desc2_valor_reais": 0.0,
+        "opcional_desc3_data_str": None,
+        "opcional_desc3_valor_reais": 0.0,
+    }
+
+    if len(linha) < 400:
+        erros.append(
+            f"Linha {numero_linha}: registro possui menos de 400 caracteres."
+        )
+
+    if linha[0:1] != "7":
+        erros.append(
+            f"Linha {numero_linha}: registro tipo 7 esperado, encontrado '{linha[0:1]}'."
+        )
+
+    tipo_insc = _campo_cnab400(linha, 2, 3).strip()
+    detalhe["tipo_inscricao_beneficiario"] = tipo_insc
+    if tipo_insc not in CNAB400_BB_TIPOS_INSCRICAO_BENEF:
+        erros.append(
+            f"Linha {numero_linha}: tipo de inscrição do beneficiário (pos. 002-003) deve ser 01=CPF ou 02=CNPJ."
+        )
+
+    doc_benef = limpar_numero(_campo_cnab400(linha, 4, 17))
+    detalhe["documento_beneficiario"] = doc_benef
+    if not doc_benef:
+        erros.append(
+            f"Linha {numero_linha}: CPF/CNPJ do beneficiário (pos. 004-017) não informado."
+        )
+    elif tipo_insc == "01" and len(doc_benef) != 11:
+        erros.append(
+            f"Linha {numero_linha}: CPF do beneficiário deve ter 11 dígitos."
+        )
+    elif tipo_insc == "02" and len(doc_benef) != 14:
+        erros.append(
+            f"Linha {numero_linha}: CNPJ do beneficiário deve ter 14 dígitos."
+        )
+
+    agencia = detalhe["agencia"]
+    if not agencia or not agencia.isdigit():
+        erros.append(
+            f"Linha {numero_linha}: prefixo da agência do beneficiário (pos. 018-021) deve conter 4 dígitos."
+        )
+    elif header_info and header_info.get("agencia") and agencia != header_info["agencia"]:
+        erros.append(
+            f"Linha {numero_linha}: prefixo da agência difere do header ({agencia} x {header_info['agencia']})."
+        )
+
+    conta = detalhe["conta"]
+    if not conta or not conta.isdigit():
+        erros.append(
+            f"Linha {numero_linha}: conta corrente do beneficiário (pos. 023-030) deve ser numérica."
+        )
+    elif header_info and header_info.get("conta") and conta != header_info["conta"]:
+        erros.append(
+            f"Linha {numero_linha}: conta corrente difere da informada no header ({conta} x {header_info['conta']})."
+        )
+
+    carteira = detalhe["carteira"]
+    if carteira and carteira not in CNAB400_BB_CARTEIRAS_VALIDAS:
+        erros.append(
+            f"Linha {numero_linha}: carteira de cobrança (pos. 107-108) '{carteira}' não está entre as carteiras válidas do BB."
+        )
+    elif not carteira:
+        erros.append(
+            f"Linha {numero_linha}: carteira de cobrança (pos. 107-108) não informada."
+        )
+
+    tipo_cobranca = detalhe["tipo_cobranca"]
+    if carteira:
+        validos = CNAB400_BB_TIPOS_COBRANCA.get(carteira, {""})
+        if tipo_cobranca not in validos:
+            erros.append(
+                f"Linha {numero_linha}: tipo de cobrança '{tipo_cobranca}' não é aceito para a carteira {carteira}."
+            )
+
+    comando = detalhe["comando"]
+    if not comando or comando not in CNAB400_BB_COMANDOS_VALIDOS:
+        erros.append(
+            f"Linha {numero_linha}: comando (pos. 109-110) '{comando}' não é reconhecido pelo manual do BB."
+        )
+
+    data_venc = _parse_data_cnab400(_campo_cnab400(linha, 121, 126))
+    detalhe["data_vencimento"] = data_venc
+    detalhe["data_vencimento_str"] = _formatar_data_br(data_venc)
+    if not data_venc:
+        erros.append(
+            f"Linha {numero_linha}: data de vencimento (pos. 121-126) inválida."
+        )
+
+    valor_centavos = _parse_valor_cnab400(_campo_cnab400(linha, 127, 139))
+    if valor_centavos is None:
+        erros.append(
+            f"Linha {numero_linha}: valor do título (pos. 127-139) deve conter apenas dígitos."
+        )
+        valor_centavos = 0
+    detalhe["valor_centavos"] = valor_centavos
+    detalhe["valor_reais"] = valor_centavos / 100.0
+
+    numero_banco = detalhe["numero_banco"]
+    if not numero_banco:
+        erros.append(
+            f"Linha {numero_linha}: número do banco (pos. 140-142) não informado."
+        )
+    elif not numero_banco.isdigit():
+        erros.append(
+            f"Linha {numero_linha}: número do banco (pos. 140-142) deve ser numérico."
+        )
+    elif header_info and header_info.get("codigo_banco") and numero_banco != header_info["codigo_banco"]:
+        erros.append(
+            f"Linha {numero_linha}: número do banco (pos. 140-142) difere do header ({numero_banco} x {header_info['codigo_banco']})."
+        )
+
+    ag_cobradora = detalhe["agencia_cobradora"]
+    if ag_cobradora and not ag_cobradora.isdigit():
+        erros.append(
+            f"Linha {numero_linha}: prefixo da agência cobradora (pos. 143-146) deve conter 4 dígitos."
+        )
+
+    especie = _campo_cnab400(linha, 148, 149).strip()
+    if especie not in CNAB400_BB_ESPECIES_VALIDAS:
+        erros.append(
+            f"Linha {numero_linha}: espécie do título (pos. 148-149) '{especie}' não está na lista permitida."
+        )
+
+    aceite = _campo_cnab400(linha, 150, 150).strip().upper()
+    if aceite and aceite not in {"A", "N"}:
+        erros.append(
+            f"Linha {numero_linha}: aceite (pos. 150) deve ser 'A' ou 'N'."
+        )
+
+    data_emissao = _parse_data_cnab400(_campo_cnab400(linha, 151, 156))
+    detalhe["data_emissao_str"] = _formatar_data_br(data_emissao)
+    if not data_emissao:
+        erros.append(
+            f"Linha {numero_linha}: data de emissão (pos. 151-156) inválida."
+        )
+    elif data_venc and data_emissao > data_venc:
+        erros.append(
+            f"Linha {numero_linha}: data de emissão não pode ser posterior ao vencimento."
+        )
+
+    instrucao1 = detalhe["instrucao1"]
+    instrucao2 = detalhe["instrucao2"]
+    if instrucao1 and not instrucao1.isdigit():
+        erros.append(
+            f"Linha {numero_linha}: instrução codificada 1 (pos. 157-158) deve conter 2 dígitos."
+        )
+    if instrucao2 and not instrucao2.isdigit():
+        erros.append(
+            f"Linha {numero_linha}: instrução codificada 2 (pos. 159-160) deve conter 2 dígitos."
+        )
+
+    juros_centavos = _parse_valor_cnab400(_campo_cnab400(linha, 161, 173))
+    if juros_centavos is None:
+        erros.append(
+            f"Linha {numero_linha}: juros de mora (pos. 161-173) deve conter apenas dígitos."
+        )
+        juros_centavos = 0
+    detalhe["juros_centavos"] = juros_centavos
+    detalhe["juros_reais"] = juros_centavos / 100.0
+
+    campo_desc_data = _campo_cnab400(linha, 174, 179)
+    campo_desc_valor = _campo_cnab400(linha, 180, 192)
+    if comando in {"35", "36"}:
+        codigo_multa = campo_desc_data[0:1].strip()
+        if codigo_multa not in {"1", "2", "9"}:
+            erros.append(
+                f"Linha {numero_linha}: código da multa (pos. 174) deve ser 1, 2 ou 9 quando o comando for {comando}."
+            )
+        else:
+            detalhe["multa_codigo"] = codigo_multa
+        data_multa = _parse_data_cnab400(_campo_cnab400(linha, 175, 180))
+        if codigo_multa in {"1", "2"} and not data_multa:
+            erros.append(
+                f"Linha {numero_linha}: data de início de multa (pos. 175-180) inválida."
+            )
+        detalhe["multa_data_str"] = _formatar_data_br(data_multa)
+        valor_multa = _parse_valor_cnab400(_campo_cnab400(linha, 181, 192))
+        if valor_multa is None:
+            erros.append(
+                f"Linha {numero_linha}: valor/percentual de multa (pos. 181-192) deve conter dígitos."
+            )
+            valor_multa = 0
+        detalhe["multa_valor_centavos"] = valor_multa
+        detalhe["multa_valor_reais"] = valor_multa / 100.0
+    else:
+        if campo_desc_data.strip() and campo_desc_data.strip() not in {"000000", "777777"}:
+            data_desc = _parse_data_cnab400(campo_desc_data)
+            if not data_desc:
+                erros.append(
+                    f"Linha {numero_linha}: data limite para desconto (pos. 174-179) inválida."
+                )
+            else:
+                if data_venc and data_desc > data_venc:
+                    erros.append(
+                        f"Linha {numero_linha}: data limite para desconto maior que o vencimento."
+                    )
+                detalhe["desconto_data_str"] = _formatar_data_br(data_desc)
+        elif campo_desc_data.strip() == "777777":
+            detalhe["desconto_data_str"] = "Por dia (777777)"
+
+        valor_desc = _parse_valor_cnab400(campo_desc_valor)
+        if valor_desc is None:
+            erros.append(
+                f"Linha {numero_linha}: valor do desconto (pos. 180-192) deve conter dígitos."
+            )
+            valor_desc = 0
+        if comando == "32" and valor_desc > 0:
+            erros.append(
+                f"Linha {numero_linha}: comando 32 (não conceder desconto) exige valor zerado no campo de desconto."
+            )
+        detalhe["desconto_valor_centavos"] = valor_desc
+        detalhe["desconto_valor_reais"] = valor_desc / 100.0
+
+    valor_iof = _parse_valor_cnab400(_campo_cnab400(linha, 193, 205))
+    if valor_iof is None:
+        erros.append(
+            f"Linha {numero_linha}: valor do IOF (pos. 193-205) deve conter dígitos."
+        )
+        valor_iof = 0
+    detalhe["valor_iof_centavos"] = valor_iof
+    detalhe["valor_iof_reais"] = valor_iof / 100.0
+
+    valor_abat = _parse_valor_cnab400(_campo_cnab400(linha, 206, 218))
+    if valor_abat is None:
+        erros.append(
+            f"Linha {numero_linha}: valor do abatimento (pos. 206-218) deve conter dígitos."
+        )
+        valor_abat = 0
+    detalhe["valor_abatimento_centavos"] = valor_abat
+    detalhe["valor_abatimento_reais"] = valor_abat / 100.0
+
+    tipo_insc_pag = detalhe["tipo_inscricao_pagador"]
+    if tipo_insc_pag not in CNAB400_BB_TIPOS_INSCRICAO_PAGADOR:
+        erros.append(
+            f"Linha {numero_linha}: tipo de inscrição do pagador (pos. 219-220) inválido."
+        )
+
+    doc_pag = detalhe["documento_pagador"]
+    if tipo_insc_pag in {"01", "02"} and not doc_pag:
+        erros.append(
+            f"Linha {numero_linha}: CPF/CNPJ do pagador obrigatório para o tipo informado."
+        )
+    elif tipo_insc_pag == "01" and doc_pag and len(doc_pag) != 11:
+        erros.append(
+            f"Linha {numero_linha}: CPF do pagador deve ter 11 dígitos."
+        )
+    elif tipo_insc_pag == "02" and doc_pag and len(doc_pag) != 14:
+        erros.append(
+            f"Linha {numero_linha}: CNPJ do pagador deve ter 14 dígitos."
+        )
+
+    if not detalhe["nome_pagador"]:
+        erros.append(
+            f"Linha {numero_linha}: nome do pagador (pos. 235-271) não informado."
+        )
+
+    cep = detalhe["cep_pagador"]
+    if cep and (len(cep) != 8 or not cep.isdigit() or cep == "00000000"):
+        erros.append(
+            f"Linha {numero_linha}: CEP do pagador (pos. 327-334) inválido."
+        )
+
+    uf = detalhe["uf_pagador"]
+    if uf and uf not in ESTADOS_BR:
+        erros.append(
+            f"Linha {numero_linha}: UF do pagador (pos. 350-351) inválida."
+        )
+
+    indicador = detalhe["indicador_recebimento_parcial"]
+    if indicador and indicador not in CNAB400_BB_INDICADOR_PARCIAL:
+        erros.append(
+            f"Linha {numero_linha}: indicador de recebimento parcial (pos. 394) deve ser 'S', 'N' ou branco."
+        )
+
+    dias_protesto = detalhe["dias_protesto"]
+    if dias_protesto and not dias_protesto.isdigit():
+        erros.append(
+            f"Linha {numero_linha}: dias para protesto/negativação (pos. 392-393) deve conter dígitos."
+        )
+    elif dias_protesto.isdigit():
+        dias_int = int(dias_protesto)
+        if comando == "01" and ("06" in {instrucao1, instrucao2}):
+            if dias_int not in CNAB400_BB_DIAS_PROTESTO_VALIDOS:
+                erros.append(
+                    f"Linha {numero_linha}: número de dias para protesto fora da faixa permitida (06-29, 35 ou 40)."
+                )
+
+    nosso_numero = detalhe["nosso_numero"]
+    if nosso_numero and not nosso_numero.isdigit():
+        erros.append(
+            f"Linha {numero_linha}: Nosso Número (pos. 064-080) deve conter apenas dígitos."
+        )
+    elif carteira in {"11", "31", "51"} and nosso_numero.strip("0"):
+        erros.append(
+            f"Linha {numero_linha}: carteiras {carteira} devem enviar Nosso Número zerado conforme o manual."
+        )
+    elif carteira in {"12", "15", "17"}:
+        convenio = detalhe.get("convenio_cobranca", "")
+        if nosso_numero and len(nosso_numero) != 17:
+            avisos.append(
+                f"Linha {numero_linha}: Nosso Número para a carteira {carteira} deveria conter 17 dígitos."
+            )
+        if nosso_numero and convenio and len(convenio) == 7 and not nosso_numero.startswith(convenio):
+            avisos.append(
+                f"Linha {numero_linha}: primeiros dígitos do Nosso Número não coincidem com o convênio informado ({convenio})."
+            )
+
+    return detalhe, erros, avisos
+
+
+def _aplicar_registro_opcional_cnab400_bb(linha: str, numero_linha: int, detalhe):
+    erros = []
+    avisos = []
+    tipo_servico = _campo_cnab400(linha, 2, 3).strip()
+
+    if tipo_servico == "07":
+        data2 = _parse_data_cnab400(_campo_cnab400(linha, 4, 9))
+        valor2 = _parse_valor_cnab400(_campo_cnab400(linha, 10, 26))
+        data3 = _parse_data_cnab400(_campo_cnab400(linha, 27, 32))
+        valor3 = _parse_valor_cnab400(_campo_cnab400(linha, 33, 49))
+
+        if data2:
+            detalhe["opcional_desc2_data_str"] = _formatar_data_br(data2)
+        if valor2 is None:
+            erros.append(
+                f"Linha {numero_linha}: valor do 2º desconto (tipo 5, pos. 010-026) deve conter dígitos."
+            )
+        else:
+            detalhe["opcional_desc2_valor_reais"] = valor2 / 100.0
+
+        if data3:
+            detalhe["opcional_desc3_data_str"] = _formatar_data_br(data3)
+        if valor3 is None:
+            erros.append(
+                f"Linha {numero_linha}: valor do 3º desconto (tipo 5, pos. 033-049) deve conter dígitos."
+            )
+        else:
+            detalhe["opcional_desc3_valor_reais"] = valor3 / 100.0
+
+    elif tipo_servico == "01":
+        emails_raw = _campo_cnab400(linha, 4, 139).strip()
+        if emails_raw:
+            emails = [email.strip() for email in emails_raw.split(";") if email.strip()]
+            detalhe["emails_pagador"].extend(emails)
+            for email in emails:
+                if "@" not in email:
+                    avisos.append(
+                        f"Linha {numero_linha}: endereço de e-mail '{email}' não contém '@'."
+                    )
+        else:
+            avisos.append(
+                f"Linha {numero_linha}: registro opcional de e-mail informado sem endereços."
+            )
+
+    elif tipo_servico == "03":
+        seu_numero15 = _campo_cnab400(linha, 4, 18).strip()
+        if seu_numero15:
+            detalhe["seu_numero_15"] = seu_numero15
+    elif tipo_servico == "08":
+        codigo = _campo_cnab400(linha, 4, 5).strip()
+        if codigo in CNAB400_BB_AGENTES_NEGATIVACAO:
+            detalhe["agente_negativador"] = CNAB400_BB_AGENTES_NEGATIVACAO[codigo]
+        else:
+            erros.append(
+                f"Linha {numero_linha}: código do agente negativador '{codigo}' inválido (esperado 10 ou 11)."
+            )
+    else:
+        avisos.append(
+            f"Linha {numero_linha}: registro opcional tipo 5 com tipo de serviço '{tipo_servico}' ainda não é tratado pelo validador."
+        )
+
+    return erros, avisos
+
+
+def validar_cnab400_bb(linhas):
+    erros_header = []
+    erros_registros = []
+    erros_trailer = []
+    avisos = []
+    titulos = []
+    header_info = None
+    codigo_banco = None
+    nome_banco = None
+    ultimo_seq = 0
+    trailer_encontrado = False
+    resumo = {
+        "qtd_titulos": 0,
+        "qtd_registros_tipo5": 0,
+        "valor_total_centavos": 0,
+        "valor_total_reais": 0.0,
+        "vencimento_min": None,
+        "vencimento_max": None,
+        "comandos": [],
+        "carteiras": [],
+    }
+    contagem_comandos = Counter()
+    contagem_carteiras = Counter()
+    ultimo_detalhe = None
+
+    for numero_linha, linha in enumerate(linhas, start=1):
+        if not linha or linha.strip() == "":
+            continue
+        linha_limpa = linha.rstrip("\r\n")
+        tipo = linha_limpa[0:1]
+
+        seq_raw = _campo_cnab400(linha_limpa, 395, 400).strip()
+        if seq_raw and seq_raw.isdigit():
+            seq = int(seq_raw)
+            if ultimo_seq and seq != ultimo_seq + 1:
+                erros_registros.append(
+                    f"Linha {numero_linha}: sequência do registro (pos. 395-400) fora da ordem esperada (esperado {ultimo_seq + 1:06d})."
+                )
+            ultimo_seq = seq
+        else:
+            erros_registros.append(
+                f"Linha {numero_linha}: sequência do registro (pos. 395-400) deve conter 6 dígitos."
+            )
+
+        if tipo == "0":
+            if header_info:
+                erros_header.append("Foram encontrados dois registros header no arquivo.")
+                continue
+            info, err, avis = _validar_header_cnab400_bb(linha_limpa, numero_linha)
+            header_info = info
+            erros_header.extend(err)
+            avisos.extend(avis)
+            codigo_banco = info.get("codigo_banco")
+            nome_banco = info.get("nome_banco")
+        elif tipo == "7":
+            detalhe, err, avis = _validar_registro_detalhe_cnab400_bb(linha_limpa, numero_linha, header_info)
+            erros_registros.extend(err)
+            avisos.extend(avis)
+            titulos.append(detalhe)
+            resumo["qtd_titulos"] += 1
+            valor_cent = detalhe.get("valor_centavos") or 0
+            resumo["valor_total_centavos"] += valor_cent
+            dt = detalhe.get("data_vencimento")
+            if dt:
+                if resumo["vencimento_min"] is None or dt < resumo["vencimento_min"]:
+                    resumo["vencimento_min"] = dt
+                if resumo["vencimento_max"] is None or dt > resumo["vencimento_max"]:
+                    resumo["vencimento_max"] = dt
+            comando = detalhe.get("comando")
+            if comando:
+                contagem_comandos[comando] += 1
+            carteira = detalhe.get("carteira")
+            if carteira:
+                contagem_carteiras[carteira] += 1
+            ultimo_detalhe = detalhe
+        elif tipo == "5":
+            resumo["qtd_registros_tipo5"] += 1
+            if not ultimo_detalhe:
+                erros_registros.append(
+                    f"Linha {numero_linha}: registro opcional tipo 5 sem um registro 7 imediatamente anterior."
+                )
+            else:
+                err_opt, avis_opt = _aplicar_registro_opcional_cnab400_bb(linha_limpa, numero_linha, ultimo_detalhe)
+                erros_registros.extend(err_opt)
+                avisos.extend(avis_opt)
+        elif tipo == "9":
+            if trailer_encontrado:
+                erros_trailer.append("Foram encontrados dois trailers no arquivo.")
+                continue
+            err_trailer, avis_trailer = _validar_trailer_cnab400_bb(linha_limpa, numero_linha, ultimo_seq)
+            erros_trailer.extend(err_trailer)
+            avisos.extend(avis_trailer)
+            trailer_encontrado = True
+        else:
+            erros_registros.append(
+                f"Linha {numero_linha}: tipo de registro '{tipo}' não faz parte do CNAB 400 do BB."
+            )
+
+    if not header_info:
+        erros_header.append("Arquivo CNAB 400 sem registro header (tipo 0).")
+    if not trailer_encontrado:
+        erros_trailer.append("Arquivo CNAB 400 sem registro trailer (tipo 9).")
+
+    if codigo_banco and codigo_banco != "001":
+        erros_header.append(
+            f"CNAB 400 implementado apenas para o Banco do Brasil (001). Arquivo indica banco {codigo_banco}."
+        )
+
+    resumo["valor_total_reais"] = resumo["valor_total_centavos"] / 100.0
+    resumo["comandos"] = [
+        {"codigo": codigo, "quantidade": quantidade}
+        for codigo, quantidade in sorted(contagem_comandos.items())
+    ]
+    resumo["carteiras"] = [
+        {"codigo": codigo, "quantidade": quantidade}
+        for codigo, quantidade in sorted(contagem_carteiras.items())
+    ]
+
+    return {
+        "codigo_banco": codigo_banco,
+        "nome_banco": nome_banco or BANCOS_CNAB.get(codigo_banco or "", "Banco não mapeado neste validador"),
+        "erros_header": erros_header,
+        "erros_registros": erros_registros,
+        "erros_trailer": erros_trailer,
+        "avisos": avisos,
+        "titulos": titulos,
+        "resumo": resumo,
+        "header_info": header_info,
+    }
+
+
 def main():
     print("=== Validador simples de arquivos CNAB 240/400 ===")
     caminho = input("Informe o caminho completo do arquivo de remessa (.txt): ").strip()
@@ -2364,7 +3725,49 @@ def main():
         else:
             print("✅ Nenhum erro encontrado nos segmentos configurados para este banco.")
     else:
-        print("\n(Validações específicas de estrutura ainda não implementadas para CNAB 400.)")
+        print("\n=== Analisando estrutura CNAB 400 (Banco do Brasil) ===")
+        analise = validar_cnab400_bb(linhas)
+        codigo_banco = analise.get("codigo_banco") or "???"
+        nome_banco = analise.get("nome_banco") or "Banco não identificado"
+        print(f"Banco detectado: {codigo_banco} - {nome_banco}")
+
+        if analise.get("erros_header"):
+            print("\n❌ Problemas no header:")
+            for erro in analise["erros_header"]:
+                print("   -", erro)
+        else:
+            print("\n✅ Header verificado sem erros críticos.")
+
+        if analise.get("erros_registros"):
+            print("\n❌ Problemas nos registros de detalhe:")
+            for erro in analise["erros_registros"]:
+                print("   -", erro)
+        else:
+            print("\n✅ Nenhum erro crítico encontrado nos registros tipo 7.")
+
+        if analise.get("erros_trailer"):
+            print("\n❌ Problemas no trailer/seqüência:")
+            for erro in analise["erros_trailer"]:
+                print("   -", erro)
+        else:
+            print("\n✅ Trailer e sequência geral consistentes.")
+
+        if analise.get("avisos"):
+            print("\n⚠ Avisos:")
+            for aviso in analise["avisos"]:
+                print("   -", aviso)
+
+        resumo = analise.get("resumo") or {}
+        print("\n=== Resumo rápido ===")
+        print(f"Títulos: {resumo.get('qtd_titulos', 0)}")
+        print(f"Valor total: R$ {resumo.get('valor_total_reais', 0.0):.2f}")
+        venc_min = resumo.get("vencimento_min")
+        venc_max = resumo.get("vencimento_max")
+        if venc_min:
+            print("Vencimento mais antigo:", venc_min.strftime("%d/%m/%Y"))
+        if venc_max:
+            print("Vencimento mais recente:", venc_max.strftime("%d/%m/%Y"))
+        print(f"Registros opcionais (tipo 5): {resumo.get('qtd_registros_tipo5', 0)}")
 
 
 if __name__ == "__main__":

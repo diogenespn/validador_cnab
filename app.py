@@ -16,6 +16,9 @@ from validador_cnab import (
     validar_qtd_registros_lote_cnab240,
     validar_totais_arquivo_cnab240,
     validar_convenio_carteira_nosso_numero_bb,
+    detectar_cnab240_itau_sisdeb,
+    validar_cnab240_itau_sisdeb,
+    validar_cnab400_bb,
 )
 
 
@@ -157,6 +160,18 @@ def validar():
         "avisos_dados_conta": [],
         "resumo_remessa": None,
         "titulos": [],
+        "cnab240_itau_sisdeb": False,
+        "itau_sisdeb_erros_header": [],
+        "itau_sisdeb_erros_lotes": [],
+        "itau_sisdeb_erros_detalhes": [],
+        "itau_sisdeb_erros_trailer": [],
+        "itau_sisdeb_avisos": [],
+        "cnab400_erros_header": [],
+        "cnab400_erros_registros": [],
+        "cnab400_erros_trailer": [],
+        "cnab400_avisos": [],
+        "resumo_cnab400": None,
+        "cnab400_header_info": None,
     }
 
     # 1) Detecta layout do arquivo (240 ou 400)
@@ -197,66 +212,91 @@ def validar():
         # Sequência de registros dentro dos lotes
         resultado["erros_sequencia"] = validar_sequencia_registros_lote(linhas)
 
-        # Validações de segmentos P/Q/etc. conforme layout cadastrado
-        erros_seg, avisos_seg = validar_segmentos_por_layout(codigo_banco, linhas)
+        if not itau_sisdeb:
+            # Validações de segmentos P/Q/etc. conforme layout cadastrado
+            erros_seg, avisos_seg = validar_segmentos_por_layout(codigo_banco, linhas)
 
-        # Validações avançadas (modo permissivo) específicas do Banco do Brasil (001)
-        if codigo_banco == "001":
-            # 1) Regras avançadas de Segmentos (P, Q, etc.) que você já tinha
-            erros_extra, avisos_extra = validar_segmentos_avancados_bb(linhas)
-            erros_seg.extend(erros_extra)
-            avisos_seg.extend(avisos_extra)
+            # Validações avançadas (modo permissivo) específicas do Banco do Brasil (001)
+            if codigo_banco == "001":
+                # 1) Regras avançadas de Segmentos (P, Q, etc.) que você já tinha
+                erros_extra, avisos_extra = validar_segmentos_avancados_bb(linhas)
+                erros_seg.extend(erros_extra)
+                avisos_seg.extend(avisos_extra)
 
-            # 2) Regras de convênio / carteira / Nosso Número (novas)
-            erros_conv, avisos_conv = validar_convenio_carteira_nosso_numero_bb(linhas)
-            erros_seg.extend(erros_conv)
-            avisos_seg.extend(avisos_conv)
+                # 2) Regras de convênio / carteira / Nosso Número (novas)
+                erros_conv, avisos_conv = validar_convenio_carteira_nosso_numero_bb(linhas)
+                erros_seg.extend(erros_conv)
+                avisos_seg.extend(avisos_conv)
 
-        resultado["erros_segmentos"] = erros_seg
-        resultado["avisos_segmentos"] = avisos_seg
+            resultado["erros_segmentos"] = erros_seg
+            resultado["avisos_segmentos"] = avisos_seg
 
-        # Agrupar avisos de segmentos por tipo (P, Q, R, convênio/carteira/NN, outros)
-        grupos = agrupar_avisos_segmentos(avisos_seg)
-        resultado["avisos_segmentos_p"] = grupos["p"]
-        resultado["avisos_segmentos_q"] = grupos["q"]
-        resultado["avisos_segmentos_r"] = grupos["r"]
-        resultado["avisos_segmentos_convenio"] = grupos["conv"]
-        resultado["avisos_segmentos_outros"] = grupos["outros"]
+            # Agrupar avisos de segmentos por tipo (P, Q, R, convênio/carteira/NN, outros)
+            grupos = agrupar_avisos_segmentos(avisos_seg)
+            resultado["avisos_segmentos_p"] = grupos["p"]
+            resultado["avisos_segmentos_q"] = grupos["q"]
+            resultado["avisos_segmentos_r"] = grupos["r"]
+            resultado["avisos_segmentos_convenio"] = grupos["conv"]
+            resultado["avisos_segmentos_outros"] = grupos["outros"]
+        else:
+            analise_itau = validar_cnab240_itau_sisdeb(linhas)
+            resultado["itau_sisdeb_erros_header"] = analise_itau["erros_header"]
+            resultado["itau_sisdeb_erros_lotes"] = analise_itau["erros_lotes"]
+            resultado["itau_sisdeb_erros_detalhes"] = analise_itau["erros_detalhes"]
+            resultado["itau_sisdeb_erros_trailer"] = analise_itau["erros_trailer"]
+            resultado["itau_sisdeb_avisos"] = analise_itau["avisos"]
+            resultado["titulos"] = analise_itau["titulos"]
+            resultado["resumo_remessa"] = analise_itau["resumo"]
 
 
         # Conferência dos dados da conta/titular informados x dados do arquivo
         erros_dados, avisos_dados = validar_dados_cedente_vs_arquivo(
-            codigo_banco, linhas, dados_conta
+            codigo_banco, linhas, dados_conta, layout=240
         )
         resultado["erros_dados_conta"] = erros_dados
         resultado["avisos_dados_conta"] = avisos_dados
 
-        # Resumo da remessa (qtd de títulos, valor total, vencimentos)
-        resumo = gerar_resumo_remessa_cnab240(codigo_banco, linhas)
-        resultado["resumo_remessa"] = resumo
+        if not itau_sisdeb:
+            # Resumo da remessa (qtd de títulos, valor total, vencimentos)
+            resumo = gerar_resumo_remessa_cnab240(codigo_banco, linhas)
+            resultado["resumo_remessa"] = resumo
 
-        # Lista detalhada de títulos (Segmentos P + Q)
-        titulos = listar_titulos_cnab240(codigo_banco, linhas)
-        resultado["titulos"] = titulos
+            # Lista detalhada de títulos (Segmentos P + Q)
+            titulos = listar_titulos_cnab240(codigo_banco, linhas)
+            resultado["titulos"] = titulos
 
-        # Validação avançada: detectar títulos com Nosso Número duplicado (BB)
-        if codigo_banco == "001" and resultado["titulos"]:
-            avisos_nn_dup = validar_nosso_numero_duplicado_titulos(resultado["titulos"])
-            if avisos_nn_dup:
-                resultado["avisos_segmentos"].extend(avisos_nn_dup)
+            # Validação avançada: detectar títulos com Nosso Número duplicado (BB)
+            if codigo_banco == "001" and resultado["titulos"]:
+                avisos_nn_dup = validar_nosso_numero_duplicado_titulos(resultado["titulos"])
+                if avisos_nn_dup:
+                    resultado["avisos_segmentos"].extend(avisos_nn_dup)
 
-                # reagrupa
-                grupos = agrupar_avisos_segmentos(resultado["avisos_segmentos"])
-                resultado["avisos_segmentos_p"] = grupos["p"]
-                resultado["avisos_segmentos_q"] = grupos["q"]
-                resultado["avisos_segmentos_r"] = grupos["r"]
-                resultado["avisos_segmentos_convenio"] = grupos["conv"]
-                resultado["avisos_segmentos_outros"] = grupos["outros"]
+                    # reagrupa
+                    grupos = agrupar_avisos_segmentos(resultado["avisos_segmentos"])
+                    resultado["avisos_segmentos_p"] = grupos["p"]
+                    resultado["avisos_segmentos_q"] = grupos["q"]
+                    resultado["avisos_segmentos_r"] = grupos["r"]
+                    resultado["avisos_segmentos_convenio"] = grupos["conv"]
+                    resultado["avisos_segmentos_outros"] = grupos["outros"]
 
 
-    # TODO: futuras validações para CNAB 400
-    # elif layout == 400:
-    #     ...
+    elif layout == 400 and linhas:
+        analise = validar_cnab400_bb(linhas)
+        resultado["codigo_banco"] = analise.get("codigo_banco")
+        resultado["nome_banco"] = analise.get("nome_banco")
+        resultado["cnab400_erros_header"] = analise.get("erros_header", [])
+        resultado["cnab400_erros_registros"] = analise.get("erros_registros", [])
+        resultado["cnab400_erros_trailer"] = analise.get("erros_trailer", [])
+        resultado["cnab400_avisos"] = analise.get("avisos", [])
+        resultado["resumo_cnab400"] = analise.get("resumo")
+        resultado["cnab400_header_info"] = analise.get("header_info")
+        resultado["titulos"] = analise.get("titulos", [])
+
+        erros_dados, avisos_dados = validar_dados_cedente_vs_arquivo(
+            analise.get("codigo_banco") or "", linhas, dados_conta, layout=400
+        )
+        resultado["erros_dados_conta"] = erros_dados
+        resultado["avisos_dados_conta"] = avisos_dados
 
     return render_template("resultado.html", resultado=resultado, dados_conta=dados_conta)
 
