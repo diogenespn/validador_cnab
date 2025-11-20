@@ -18,7 +18,13 @@ from validador_cnab import (
     validar_convenio_carteira_nosso_numero_bb,
     detectar_cnab240_itau_sisdeb,
     validar_cnab240_itau_sisdeb,
+    validar_cnab240_sicredi,
     validar_cnab400_bb,
+    validar_cnab400_itau,
+    validar_cnab400_sicredi,
+    validar_cnab400_caixa,
+    validar_cnab400_bradesco,
+    validar_cnab400_santander,
 )
 
 
@@ -161,6 +167,7 @@ def validar():
         "resumo_remessa": None,
         "titulos": [],
         "cnab240_itau_sisdeb": False,
+        "cnab240_sicredi": False,
         "itau_sisdeb_erros_header": [],
         "itau_sisdeb_erros_lotes": [],
         "itau_sisdeb_erros_detalhes": [],
@@ -195,6 +202,11 @@ def validar():
         codigo_banco, nome_banco = identificar_banco(linhas[0])
         resultado["codigo_banco"] = codigo_banco
         resultado["nome_banco"] = nome_banco
+
+        itau_sisdeb = codigo_banco == "341" and detectar_cnab240_itau_sisdeb(linhas)
+        resultado["cnab240_itau_sisdeb"] = itau_sisdeb
+        sicredi_layout = codigo_banco == "748"
+        resultado["cnab240_sicredi"] = sicredi_layout
 
         # Estrutura básica (header/trailer/tipos de registro) + totais do arquivo
         erros_estrutura_basica = validar_estrutura_basica_cnab240(linhas)
@@ -279,9 +291,37 @@ def validar():
                     resultado["avisos_segmentos_convenio"] = grupos["conv"]
                     resultado["avisos_segmentos_outros"] = grupos["outros"]
 
+        if sicredi_layout:
+            analise_sicredi = validar_cnab240_sicredi(linhas)
+            if analise_sicredi["erros_header"]:
+                resultado["erros_estrutura"].extend(analise_sicredi["erros_header"])
+            if analise_sicredi["erros_segmentos"]:
+                resultado["erros_segmentos"].extend(analise_sicredi["erros_segmentos"])
+            if analise_sicredi["avisos"]:
+                resultado["avisos_segmentos"].extend(analise_sicredi["avisos"])
+                grupos = agrupar_avisos_segmentos(resultado["avisos_segmentos"])
+                resultado["avisos_segmentos_p"] = grupos["p"]
+                resultado["avisos_segmentos_q"] = grupos["q"]
+                resultado["avisos_segmentos_r"] = grupos["r"]
+                resultado["avisos_segmentos_convenio"] = grupos["conv"]
+                resultado["avisos_segmentos_outros"] = grupos["outros"]
+
 
     elif layout == 400 and linhas:
-        analise = validar_cnab400_bb(linhas)
+        header_bruto = linhas[0].rstrip("\r\n")
+        codigo_banco_arquivo = header_bruto[76:79] if len(header_bruto) >= 79 else ""
+        if codigo_banco_arquivo == "341":
+            analise = validar_cnab400_itau(linhas)
+        elif codigo_banco_arquivo == "748":
+            analise = validar_cnab400_sicredi(linhas)
+        elif codigo_banco_arquivo == "104":
+            analise = validar_cnab400_caixa(linhas)
+        elif codigo_banco_arquivo == "237":
+            analise = validar_cnab400_bradesco(linhas)
+        elif codigo_banco_arquivo == "033":
+            analise = validar_cnab400_santander(linhas)
+        else:
+            analise = validar_cnab400_bb(linhas)
         resultado["codigo_banco"] = analise.get("codigo_banco")
         resultado["nome_banco"] = analise.get("nome_banco")
         resultado["cnab400_erros_header"] = analise.get("erros_header", [])
