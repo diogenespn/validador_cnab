@@ -54,8 +54,10 @@ def main():
     layout = detectar_layout(linhas)
 
     if isinstance(layout, set):
+        tamanhos_str = sorted(list(layout))
         print("Nao foi possivel identificar um layout unico (240 ou 400).")
-        print(f"Tamanhos de linha encontrados: {layout}")
+        print(f"Tamanhos de linha encontrados: {tamanhos_str}")
+        print(f"Exemplo do primeiro tamanho encontrado: {tamanhos_str[0] if tamanhos_str else 'n/a'}")
         print("Provavelmente ha linhas com tamanhos diferentes ou o arquivo nao e CNAB padrao.")
         return
 
@@ -125,6 +127,17 @@ def main():
         print("\n=== Analisando estrutura CNAB 400 ===")
         header_bruto = linhas[0].rstrip("\r\n")
         codigo_banco_arquivo = header_bruto[76:79] if len(header_bruto) >= 79 else ""
+        # BRB: header comeca com DCB e codigo nao vem no slot 076-079; forca 070 ao detectar layout DCB/075
+        if codigo_banco_arquivo.strip() == "" and header_bruto.startswith("DCB"):
+            codigo_banco_arquivo = "070"
+        elif codigo_banco_arquivo.strip() == "" and len(header_bruto) >= 9 and header_bruto[6:9] == "075":
+            codigo_banco_arquivo = "070"
+        elif codigo_banco_arquivo.strip() == "":
+            for linha in linhas:
+                reg = linha.rstrip("\r\n")
+                if reg.startswith("01") and len(reg) >= 153:
+                    codigo_banco_arquivo = reg[150:153]
+                    break
         if codigo_banco_arquivo == "341":
             analise = validar_cnab400_itau(linhas)
         elif codigo_banco_arquivo == "748":

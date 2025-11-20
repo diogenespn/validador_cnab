@@ -137,6 +137,13 @@
     .summary-card small {
       color: #6c7385;
     }
+
+    /* Stack helpers para alinhar cards verticalmente */
+    .card-stack {
+      display: grid;
+      gap: 0.75rem;
+      align-content: start;
+    }
   </style>
 </head>
 
@@ -316,7 +323,7 @@
         <!-- GRID PRINCIPAL: duas colunas em telas médias/grandes -->
         <div class="row g-3">
           <!-- Coluna esquerda: informações e conferência -->
-          <div class="col-12 col-lg-6">
+          <div class="col-12 col-lg-6 card-stack">
             <div class="section-title">Arquivo e cedente</div>
 
             <!-- Informações gerais -->
@@ -468,7 +475,7 @@
           </div>
 
       <!-- Coluna direita: estrutura CNAB -->
-      <div class="col-12 col-lg-6">
+      <div class="col-12 col-lg-6 card-stack">
         <div class="section-title">Estrutura do arquivo</div>
         {% if resultado.layout == 240 %}
 

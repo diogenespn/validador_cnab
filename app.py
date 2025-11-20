@@ -310,7 +310,22 @@ def validar():
 
     elif layout == 400 and linhas:
         header_bruto = linhas[0].rstrip("\r\n")
+        # Detecta banco para CNAB 400 (alguns bancos usam posições diferentes)
         codigo_banco_arquivo = header_bruto[76:79] if len(header_bruto) >= 79 else ""
+
+        # BRB: header comeca com "DCB" e o codigo nao esta nas posicoes 076-079; registros usam 070 (ex.: pos. 151-153 no detalhe)
+        if codigo_banco_arquivo.strip() == "" and header_bruto.startswith("DCB"):
+            codigo_banco_arquivo = "070"
+        elif codigo_banco_arquivo.strip() == "" and len(header_bruto) >= 9 and header_bruto[6:9] == "075":
+            codigo_banco_arquivo = "070"
+        elif codigo_banco_arquivo.strip() == "":
+            # tenta ler o primeiro detalhe para ver se traz o código 070 nas posições 151-153
+            for linha in linhas:
+                reg = linha.rstrip("\r\n")
+                if reg.startswith("01") and len(reg) >= 153:
+                    codigo_banco_arquivo = reg[150:153]
+                    break
+
         if codigo_banco_arquivo == "341":
             analise = validar_cnab400_itau(linhas)
         elif codigo_banco_arquivo == "748":
