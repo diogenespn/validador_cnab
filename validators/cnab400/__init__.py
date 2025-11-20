@@ -39,6 +39,10 @@ from .bb import (
     validar_cnab400_bb
 )
 
+from .brb import (
+    validar_cnab400_brb
+)
+
 from .itau import (
     validar_cnab400_itau
 )
@@ -91,6 +95,7 @@ __all__ = [
     "_validar_registro_detalhe_cnab400_bb",
     "_aplicar_registro_opcional_cnab400_bb",
     "validar_cnab400_bb",
+    "validar_cnab400_brb",
     "validar_cnab400_itau",
     "validar_cnab400_sicredi",
     "validar_cnab400_caixa",

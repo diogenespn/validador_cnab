@@ -27,6 +27,7 @@ from .cnab240 import (
 )
 from .cnab400 import (
     validar_cnab400_bb,
+    validar_cnab400_brb,
     validar_cnab400_bradesco,
     validar_cnab400_caixa,
     validar_cnab400_itau,
@@ -59,13 +60,15 @@ def main():
         print("Provavelmente há linhas com tamanhos diferentes ou o arquivo não é CNAB padrão.")
         return
 
-    print(f"✅ Layout detectado: CNAB {layout}")
+    print(f"�
+ Layout detectado: CNAB {layout}")
 
     # 2) Valida tamanho das linhas
     erros_tamanho = validar_tamanho_linhas(linhas, layout)
 
     if not erros_tamanho:
-        print("✅ Todas as linhas estão com o tamanho correto.")
+        print("�
+ Todas as linhas estão com o tamanho correto.")
     else:
         print("❌ Problemas de tamanho de linha encontrados:")
         for erro in erros_tamanho:
@@ -82,7 +85,8 @@ def main():
         erros_estrutura = validar_estrutura_basica_cnab240(linhas)
 
         if not erros_estrutura:
-            print("✅ Estrutura básica (header/trailer/tipos de registro) está OK.")
+            print("�
+ Estrutura básica (header/trailer/tipos de registro) está OK.")
         else:
             print("❌ Foram encontrados problemas na estrutura do arquivo:")
             for erro in erros_estrutura:
@@ -93,7 +97,8 @@ def main():
         erros_banco = validar_codigo_banco_consistente(linhas, codigo_banco)
 
         if not erros_banco:
-            print("✅ Todas as linhas possuem o mesmo código de banco do header.")
+            print("�
+ Todas as linhas possuem o mesmo código de banco do header.")
         else:
             print("❌ Inconsistências de código de banco encontradas:")
             for erro in erros_banco:
@@ -104,7 +109,8 @@ def main():
         erros_lotes = validar_lotes_cnab240(linhas)
 
         if not erros_lotes:
-            print("✅ Estrutura de lotes está OK (header, detalhes e trailer).")
+            print("�
+ Estrutura de lotes está OK (header, detalhes e trailer).")
         else:
             print("❌ Problemas na estrutura de lotes:")
             for erro in erros_lotes:
@@ -115,7 +121,8 @@ def main():
         erros_seq = validar_sequencia_registros_lote(linhas)
 
         if not erros_seq:
-            print("✅ Sequência dos registros nos lotes está OK.")
+            print("�
+ Sequência dos registros nos lotes está OK.")
         else:
             print("❌ Problemas na sequência dos registros:")
             for erro in erros_seq:
@@ -135,40 +142,55 @@ def main():
             for erro in erros_seg:
                 print("   -", erro)
         else:
-            print("✅ Nenhum erro encontrado nos segmentos configurados para este banco.")
+            print("�
+ Nenhum erro encontrado nos segmentos configurados para este banco.")
     else:
-        print("\n=== Analisando estrutura CNAB 400 (Banco do Brasil) ===")
-        analise = validar_cnab400_bb(linhas)
+        print("\n=== Analisando estrutura CNAB 400 ===")
+        header_bruto = linhas[0].rstrip("\r\n")
+        codigo_banco_arquivo = header_bruto[76:79] if len(header_bruto) >= 79 else ""
+        if codigo_banco_arquivo == "341":
+            analise = validar_cnab400_itau(linhas)
+        elif codigo_banco_arquivo == "748":
+            analise = validar_cnab400_sicredi(linhas)
+        elif codigo_banco_arquivo == "104":
+            analise = validar_cnab400_caixa(linhas)
+        elif codigo_banco_arquivo == "237":
+            analise = validar_cnab400_bradesco(linhas)
+        elif codigo_banco_arquivo == "033":
+            analise = validar_cnab400_santander(linhas)
+        elif codigo_banco_arquivo == "070":
+            analise = validar_cnab400_brb(linhas)
+        else:
+            analise = validar_cnab400_bb(linhas)
         codigo_banco = analise.get("codigo_banco") or "???"
-        nome_banco = analise.get("nome_banco") or "Banco não identificado"
+        nome_banco = analise.get("nome_banco") or "Banco nao identificado"
         print(f"Banco detectado: {codigo_banco} - {nome_banco}")
 
         if analise.get("erros_header"):
-            print("\n❌ Problemas no header:")
+            print("\nProblemas no header:")
             for erro in analise["erros_header"]:
                 print("   -", erro)
         else:
-            print("\n✅ Header verificado sem erros críticos.")
+            print("\nHeader verificado sem erros criticos.")
 
         if analise.get("erros_registros"):
-            print("\n❌ Problemas nos registros de detalhe:")
+            print("\nProblemas nos registros de detalhe:")
             for erro in analise["erros_registros"]:
                 print("   -", erro)
         else:
-            print("\n✅ Nenhum erro crítico encontrado nos registros tipo 7.")
+            print("\nNenhum erro critico encontrado nos registros tipo 7.")
 
         if analise.get("erros_trailer"):
-            print("\n❌ Problemas no trailer/seqüência:")
+            print("\nProblemas no trailer/sequencia:")
             for erro in analise["erros_trailer"]:
                 print("   -", erro)
         else:
-            print("\n✅ Trailer e sequência geral consistentes.")
+            print("\nTrailer e sequencia geral consistentes.")
 
         if analise.get("avisos"):
-            print("\n⚠ Avisos:")
+            print("\nAvisos:")
             for aviso in analise["avisos"]:
                 print("   -", aviso)
-
         resumo = analise.get("resumo") or {}
         print("\n=== Resumo rápido ===")
         print(f"Títulos: {resumo.get('qtd_titulos', 0)}")
