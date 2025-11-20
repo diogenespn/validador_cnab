@@ -1,4 +1,4 @@
-"""Utilit?rio de linha de comando para o validador CNAB."""
+"""Utilitario de linha de comando para o validador CNAB."""
 
 import os
 from .base import (
@@ -35,115 +35,92 @@ from .cnab400 import (
     validar_cnab400_sicredi,
 )
 
+
 def main():
     print("=== Validador simples de arquivos CNAB 240/400 ===")
     caminho = input("Informe o caminho completo do arquivo de remessa (.txt): ").strip()
 
     if not os.path.isfile(caminho):
-        print("❌ Arquivo não encontrado. Verifique o caminho e tente novamente.")
+        print("Erro: arquivo nao encontrado. Verifique o caminho e tente novamente.")
         return
 
-    # Lê todas as linhas do arquivo
     with open(caminho, "r", encoding="latin-1") as f:
         linhas = f.readlines()
 
     if not linhas:
-        print("❌ Arquivo está vazio.")
+        print("Erro: arquivo esta vazio.")
         return
 
-    # 1) Detecta layout (240 ou 400)
     layout = detectar_layout(linhas)
 
     if isinstance(layout, set):
-        print("⚠ Não foi possível identificar um layout único (240 ou 400).")
+        print("Nao foi possivel identificar um layout unico (240 ou 400).")
         print(f"Tamanhos de linha encontrados: {layout}")
-        print("Provavelmente há linhas com tamanhos diferentes ou o arquivo não é CNAB padrão.")
+        print("Provavelmente ha linhas com tamanhos diferentes ou o arquivo nao e CNAB padrao.")
         return
 
-    print(f"�
- Layout detectado: CNAB {layout}")
+    print(f"OK. Layout detectado: CNAB {layout}")
 
-    # 2) Valida tamanho das linhas
     erros_tamanho = validar_tamanho_linhas(linhas, layout)
-
     if not erros_tamanho:
-        print("�
- Todas as linhas estão com o tamanho correto.")
+        print("OK. Todas as linhas estao com o tamanho correto.")
     else:
-        print("❌ Problemas de tamanho de linha encontrados:")
+        print("Erros de tamanho de linha:")
         for erro in erros_tamanho:
             print("   -", erro)
 
-    # 3) Se for CNAB 240, faz validações extras de estrutura
     if layout == 240:
-        print("\n=== Analisando estrutura básica CNAB 240 ===")
-
-        # Detecta banco pelo header
+        print("\n=== Analisando estrutura basica CNAB 240 ===")
         codigo_banco, nome_banco = identificar_banco(linhas[0])
-        print(f"🏦 Banco detectado pelo header: {codigo_banco} - {nome_banco}")
+        print(f"Banco detectado pelo header: {codigo_banco} - {nome_banco}")
 
         erros_estrutura = validar_estrutura_basica_cnab240(linhas)
-
-        if not erros_estrutura:
-            print("�
- Estrutura básica (header/trailer/tipos de registro) está OK.")
-        else:
-            print("❌ Foram encontrados problemas na estrutura do arquivo:")
+        if erros_estrutura:
+            print("Problemas na estrutura do arquivo:")
             for erro in erros_estrutura:
                 print("   -", erro)
-
-        # 4) Valida código de banco em todas as linhas
-        print("\n=== Validando consistência do código do banco em todas as linhas ===")
-        erros_banco = validar_codigo_banco_consistente(linhas, codigo_banco)
-
-        if not erros_banco:
-            print("�
- Todas as linhas possuem o mesmo código de banco do header.")
         else:
-            print("❌ Inconsistências de código de banco encontradas:")
+            print("OK. Estrutura basica (header/trailer/tipos de registro) esta OK.")
+
+        print("\n=== Validando consistencia do codigo do banco em todas as linhas ===")
+        erros_banco = validar_codigo_banco_consistente(linhas, codigo_banco)
+        if erros_banco:
+            print("Inconsistencias de codigo de banco:")
             for erro in erros_banco:
                 print("   -", erro)
+        else:
+            print("OK. Todas as linhas possuem o mesmo codigo de banco do header.")
 
-        # 5) Valida lotes (header/trailer/detalhes)
         print("\n=== Validando estrutura de lotes (Header/Detalhes/Trailer) ===")
         erros_lotes = validar_lotes_cnab240(linhas)
-
-        if not erros_lotes:
-            print("�
- Estrutura de lotes está OK (header, detalhes e trailer).")
-        else:
-            print("❌ Problemas na estrutura de lotes:")
+        if erros_lotes:
+            print("Problemas na estrutura de lotes:")
             for erro in erros_lotes:
                 print("   -", erro)
-
-        # 6) Valida sequência de registros no lote
-        print("\n=== Validando sequência de registros dentro de cada lote ===")
-        erros_seq = validar_sequencia_registros_lote(linhas)
-
-        if not erros_seq:
-            print("�
- Sequência dos registros nos lotes está OK.")
         else:
-            print("❌ Problemas na sequência dos registros:")
+            print("OK. Estrutura de lotes esta OK (header, detalhes e trailer).")
+
+        print("\n=== Validando sequencia de registros dentro de cada lote ===")
+        erros_seq = validar_sequencia_registros_lote(linhas)
+        if erros_seq:
+            print("Problemas na sequencia dos registros:")
             for erro in erros_seq:
                 print("   -", erro)
+        else:
+            print("OK. Sequencia dos registros nos lotes esta OK.")
 
-        # 7) Validações de segmentos baseadas no layout configurado
-        print("\n=== Validações específicas por layout configurado (Segmentos) ===")
+        print("\n=== Validacoes especificas por layout configurado (Segmentos) ===")
         erros_seg, avisos_seg = validar_segmentos_por_layout(codigo_banco, linhas)
-
         if avisos_seg:
-            print("⚠ Avisos em segmentos:")
+            print("Avisos em segmentos:")
             for aviso in avisos_seg:
                 print("   -", aviso)
-
         if erros_seg:
-            print("❌ Erros em segmentos (P, Q, etc.):")
+            print("Erros em segmentos (P, Q, etc.):")
             for erro in erros_seg:
                 print("   -", erro)
         else:
-            print("�
- Nenhum erro encontrado nos segmentos configurados para este banco.")
+            print("Nenhum erro encontrado nos segmentos configurados para este banco.")
     else:
         print("\n=== Analisando estrutura CNAB 400 ===")
         header_bruto = linhas[0].rstrip("\r\n")
@@ -162,6 +139,7 @@ def main():
             analise = validar_cnab400_brb(linhas)
         else:
             analise = validar_cnab400_bb(linhas)
+
         codigo_banco = analise.get("codigo_banco") or "???"
         nome_banco = analise.get("nome_banco") or "Banco nao identificado"
         print(f"Banco detectado: {codigo_banco} - {nome_banco}")
@@ -178,7 +156,7 @@ def main():
             for erro in analise["erros_registros"]:
                 print("   -", erro)
         else:
-            print("\nNenhum erro critico encontrado nos registros tipo 7.")
+            print("\nNenhum erro critico encontrado nos registros de detalhe.")
 
         if analise.get("erros_trailer"):
             print("\nProblemas no trailer/sequencia:")
@@ -191,9 +169,10 @@ def main():
             print("\nAvisos:")
             for aviso in analise["avisos"]:
                 print("   -", aviso)
+
         resumo = analise.get("resumo") or {}
-        print("\n=== Resumo rápido ===")
-        print(f"Títulos: {resumo.get('qtd_titulos', 0)}")
+        print("\n=== Resumo rapido ===")
+        print(f"Titulos: {resumo.get('qtd_titulos', 0)}")
         print(f"Valor total: R$ {resumo.get('valor_total_reais', 0.0):.2f}")
         venc_min = resumo.get("vencimento_min")
         venc_max = resumo.get("vencimento_max")
@@ -202,3 +181,7 @@ def main():
         if venc_max:
             print("Vencimento mais recente:", venc_max.strftime("%d/%m/%Y"))
         print(f"Registros opcionais (tipo 5): {resumo.get('qtd_registros_tipo5', 0)}")
+
+
+if __name__ == "__main__":
+    main()
