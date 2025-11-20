@@ -435,6 +435,9 @@ LAYOUTS_CNAB240 = {
     # Banco do Brasil
     "001": LAYOUT_CNAB240_COMUM_PQ,
 
+    # Banestes
+    "021": LAYOUT_CNAB240_COMUM_PQ,
+
     # Banco de Brasília (BRB)
     "070": LAYOUT_CNAB240_COMUM_PQ,
 

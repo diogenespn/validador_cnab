@@ -144,6 +144,25 @@
       gap: 0.75rem;
       align-content: start;
     }
+
+    /* Destaque para o card de títulos */
+    .titles-card {
+      background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+      border: 1px solid #dfe6ff;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+      border-radius: 12px;
+    }
+
+    .titles-card .card-header {
+      background: transparent;
+      border-bottom: 1px solid #e6ebff;
+      color: #0f1f4b;
+    }
+
+    .titles-card .card-body {
+      background: #fff;
+      min-height: 260px;
+    }
   </style>
 </head>
 
@@ -184,11 +203,20 @@
   (resultado.erros_lotes|length) +
   (resultado.erros_sequencia|length) +
   (resultado.erros_segmentos|length) +
-  (resultado.erros_dados_conta|length)
+  (resultado.erros_dados_conta|length) +
+  (resultado.cnab400_erros_header|length if resultado.cnab400_erros_header is defined else 0) +
+  (resultado.cnab400_erros_registros|length if resultado.cnab400_erros_registros is defined else 0) +
+  (resultado.cnab400_erros_trailer|length if resultado.cnab400_erros_trailer is defined else 0) +
+  (resultado.itau_sisdeb_erros_header|length if resultado.itau_sisdeb_erros_header is defined else 0) +
+  (resultado.itau_sisdeb_erros_lotes|length if resultado.itau_sisdeb_erros_lotes is defined else 0) +
+  (resultado.itau_sisdeb_erros_detalhes|length if resultado.itau_sisdeb_erros_detalhes is defined else 0) +
+  (resultado.itau_sisdeb_erros_trailer|length if resultado.itau_sisdeb_erros_trailer is defined else 0)
   %}
   {% set total_avisos =
   (resultado.avisos_segmentos|length) +
-  (resultado.avisos_dados_conta|length)
+  (resultado.avisos_dados_conta|length) +
+  (resultado.cnab400_avisos|length if resultado.cnab400_avisos is defined else 0) +
+  (resultado.itau_sisdeb_avisos|length if resultado.itau_sisdeb_avisos is defined else 0)
   %}
   {% set total_titulos =
   resultado.titulos|length if resultado.titulos
@@ -321,7 +349,7 @@
         </div>
 
         <!-- GRID PRINCIPAL: duas colunas em telas médias/grandes -->
-        <div class="row g-3">
+        <div class="row row-cols-1 row-cols-lg-2 g-3 align-items-start">
           <!-- Coluna esquerda: informações e conferência -->
           <div class="col-12 col-lg-6 card-stack">
             <div class="section-title">Arquivo e cedente</div>
@@ -667,17 +695,20 @@
           </div>
 
           <!-- Lista de títulos -->
-          <div class="card mb-3">
+          <div class="card mb-3 border-0 titles-card">
             <div class="card-header d-flex justify-content-between align-items-center">
-              <div>
-                <strong>Títulos da remessa</strong>
-                {% if resultado.titulos and resultado.titulos|length > 0 %}
-                <span class="badge bg-secondary ms-2">
-                  {{ resultado.titulos|length }} título(s)
-                </span>
-                {% endif %}
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-list-check fs-5"></i>
+                <div>
+                  <strong>Títulos da remessa</strong>
+                  {% if resultado.titulos and resultado.titulos|length > 0 %}
+                  <span class="badge bg-light text-primary ms-2">
+                    {{ resultado.titulos|length }} título(s)
+                  </span>
+                  {% endif %}
+                </div>
               </div>
-              <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
+              <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse"
                 data-bs-target="#collapseTitulos" aria-expanded="true" aria-controls="collapseTitulos">
                 <span class="label-btn">Recolher</span>
                 <i class="bi bi-chevron-up"></i>
@@ -718,7 +749,7 @@
                           <td>{{ loop.index }}</td>
                           <td>{{ t.lote }}</td>
                           <td>{{ t.sequencia }}</td>
-                          <td>{{ t.nosso_numero }}</td>
+                          <td class="fw-semibold">{{ t.nosso_numero }}</td>
                           <td>{{ t.sacado_documento }}</td>
                           <td>{{ t.sacado_nome }}</td>
                           <td>
@@ -735,7 +766,7 @@
                             -
                             {% endif %}
                           </td>
-                          <td class="text-end">
+                          <td class="text-end fw-semibold">
                             {{ "%.2f"|format(t.valor_reais) }}
                           </td>
                         </tr>

@@ -62,6 +62,9 @@ from .bradesco import (
 from .santander import (
     validar_cnab400_santander
 )
+from .banestes import (
+    validar_cnab400_banestes
+)
 
 __all__ = [
     "CNAB400_BB_CARTEIRAS_VALIDAS",
@@ -100,5 +103,6 @@ __all__ = [
     "validar_cnab400_sicredi",
     "validar_cnab400_caixa",
     "validar_cnab400_bradesco",
-    "validar_cnab400_santander"
+    "validar_cnab400_santander",
+    "validar_cnab400_banestes"
 ]

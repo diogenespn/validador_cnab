@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 BANCOS_CNAB = {
     "001": "Banco do Brasil",
+    "021": "Banestes",
     "070": "Banco de Brasília (BRB)",
     "104": "Caixa Economica Federal",
     "208": "BTG Pactual",

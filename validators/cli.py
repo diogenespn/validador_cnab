@@ -28,6 +28,7 @@ from .cnab240 import (
 from .cnab400 import (
     validar_cnab400_bb,
     validar_cnab400_brb,
+    validar_cnab400_banestes,
     validar_cnab400_bradesco,
     validar_cnab400_caixa,
     validar_cnab400_itau,
@@ -150,6 +151,8 @@ def main():
             analise = validar_cnab400_santander(linhas)
         elif codigo_banco_arquivo == "070":
             analise = validar_cnab400_brb(linhas)
+        elif codigo_banco_arquivo == "021":
+            analise = validar_cnab400_banestes(linhas)
         else:
             analise = validar_cnab400_bb(linhas)
 

@@ -21,6 +21,7 @@ from validador_cnab import (
     validar_cnab240_sicredi,
     validar_cnab400_bb,
     validar_cnab400_brb,
+    validar_cnab400_banestes,
     validar_cnab400_itau,
     validar_cnab400_sicredi,
     validar_cnab400_caixa,
@@ -338,6 +339,8 @@ def validar():
             analise = validar_cnab400_santander(linhas)
         elif codigo_banco_arquivo == "070":
             analise = validar_cnab400_brb(linhas)
+        elif codigo_banco_arquivo == "021":
+            analise = validar_cnab400_banestes(linhas)
         else:
             analise = validar_cnab400_bb(linhas)
         resultado["codigo_banco"] = analise.get("codigo_banco")
