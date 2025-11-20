@@ -1,0 +1,62 @@
+"""Constantes e tabelas auxiliares para CNAB 400."""
+
+CNAB400_BB_CARTEIRAS_VALIDAS = {"11", "12", "15", "17", "31", "51"}
+
+CNAB400_BB_TIPOS_COBRANCA = {
+    "11": {"", "04DSC", "08VDR", "02VIN"},
+    "12": {""},
+    "15": {""},
+    "17": {"", "04DSC", "08VDR", "02VIN", "03SEG"},
+    "31": {""},
+    "51": {""},
+}
+
+CNAB400_BB_COMANDOS_VALIDOS = {
+    "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12",
+    "16", "31", "32", "33", "34", "35", "36",
+}
+
+CNAB400_BB_ESPECIES_VALIDAS = {
+    "01", "02", "03", "05", "08", "09", "10", "12", "13", "15", "25", "26", "27", "31", "32",
+}
+
+CNAB400_BB_TIPOS_INSCRICAO_BENEF = {"01", "02"}
+
+CNAB400_BB_TIPOS_INSCRICAO_PAGADOR = {"00", "01", "02"}
+
+CNAB400_BB_INDICADOR_PARCIAL = {"", "N", "S"}
+
+CNAB400_BB_AGENTES_NEGATIVACAO = {
+    "10": "Serasa",
+    "11": "Quod",
+}
+
+CNAB400_BB_DIAS_PROTESTO_VALIDOS = set(range(6, 30)) | {35, 40}
+
+CNAB400_ITAU_TIPOS_INSCRICAO = {"01", "02"}
+
+CNAB400_ITAU_CODIGO_BANCO = "341"
+
+CNAB400_ITAU_TIPOS_MOEDA = {"REA", "USD", "EUR", "LIB", "OUT"}
+
+CNAB400_SICREDI_CODIGO_BANCO = "748"
+
+CNAB400_SICREDI_TIPO_COBRANCA = {"A"}
+
+CNAB400_SICREDI_TIPO_CARTEIRA = {"A"}
+
+CNAB400_SICREDI_TIPO_IMPRESSAO = {"A", "B"}
+
+CNAB400_SICREDI_TIPO_MOEDA = {"A"}
+
+CNAB400_SICREDI_TIPO_DESCONTO = {"A", "B"}
+
+CNAB400_SICREDI_TIPO_JUROS = {"A", "B"}
+
+CNAB400_SICREDI_TIPO_POSTAGEM = {"S", "N"}
+
+CNAB400_SICREDI_TIPO_IMPRESSAO_BOLETO = {"A", "B"}
+
+CNAB400_SICREDI_ESPECIES = {
+    "A", "B", "C", "D", "E", "G", "H", "I", "J", "K", "O"
+}

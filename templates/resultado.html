@@ -95,6 +95,48 @@
     .titulo-detalhes {
       font-size: 0.8rem;
     }
+
+    .summary-card {
+      background: #fff;
+      border: 1px solid #e4e7f2;
+      border-radius: 0.9rem;
+      padding: 1rem 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+      height: 100%;
+    }
+
+    .summary-card .icon-shape {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+    }
+
+    .summary-card .label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #7b8197;
+      margin-bottom: 0.2rem;
+      font-weight: 600;
+    }
+
+    .summary-card .value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1f2937;
+      line-height: 1.1;
+    }
+
+    .summary-card small {
+      color: #6c7385;
+    }
   </style>
 </head>
 
@@ -141,6 +183,10 @@
   (resultado.avisos_segmentos|length) +
   (resultado.avisos_dados_conta|length)
   %}
+  {% set total_titulos =
+  resultado.titulos|length if resultado.titulos
+  else (resultado.resumo_remessa.qtd_titulos if resultado.resumo_remessa else 0)
+  %}
 
   <main class="container mb-5">
     <div class="row">
@@ -184,6 +230,87 @@
             </div>
           </div>
           {% endif %}
+        </div>
+
+        <!-- Resumo rápido -->
+        <div class="summary-grid row row-cols-1 row-cols-sm-2 row-cols-xl-4 g-3 mb-4">
+          <div class="col">
+            <div class="summary-card">
+              <div class="icon-shape bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-diagram-3"></i>
+              </div>
+              <div>
+                <div class="label">Layout</div>
+                <div class="value">
+                  {% if resultado.layout == 240 %}
+                  CNAB 240
+                  {% elif resultado.layout == 400 %}
+                  CNAB 400
+                  {% else %}
+                  {{ resultado.layout or "Indefinido" }}
+                  {% endif %}
+                </div>
+                <small>Formato detectado automaticamente</small>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="summary-card">
+              <div class="icon-shape bg-success bg-opacity-10 text-success">
+                <i class="bi bi-bank"></i>
+              </div>
+              <div>
+                <div class="label">Banco</div>
+                <div class="value">
+                  {% if resultado.codigo_banco %}
+                  {{ resultado.codigo_banco }}
+                  {% else %}
+                  N/D
+                  {% endif %}
+                </div>
+                <small>{{ resultado.nome_banco or "Banco não identificado" }}</small>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="summary-card">
+              <div class="icon-shape bg-info bg-opacity-10 text-info">
+                <i class="bi bi-collection"></i>
+              </div>
+              <div>
+                <div class="label">Títulos encontrados</div>
+                <div class="value">
+                  {{ total_titulos }}
+                </div>
+                <small>
+                  {% if resultado.layout == 400 %}
+                  Resumo CNAB 400
+                  {% else %}
+                  Segmentos P/Q processados
+                  {% endif %}
+                </small>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="summary-card">
+              <div class="icon-shape bg-warning bg-opacity-10 text-warning">
+                <i class="bi bi-clipboard-check"></i>
+              </div>
+              <div>
+                <div class="label">Status</div>
+                <div class="value">
+                  {{ total_erros }}
+                </div>
+                <small>
+                  {{ "erro(s)" if total_erros != 1 else "erro" }}
+                  {% if total_avisos %}
+                  • {{ total_avisos }} aviso(s)
+                  {% endif %}
+                </small>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- GRID PRINCIPAL: duas colunas em telas médias/grandes -->
