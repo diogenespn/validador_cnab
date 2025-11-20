@@ -1,4 +1,4 @@
-"""Fun??es utilit?rias compartilhadas entre validadores CNAB 400."""
+"""Funções utilitárias compartilhadas entre validadores CNAB 400."""
 
 from datetime import datetime
 
