@@ -1,4 +1,4 @@
-"""Utilitario de linha de comando para o validador CNAB."""
+"""Utilitário de linha de comando para o validador CNAB."""
 
 import os
 from .base import (
