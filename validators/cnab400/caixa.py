@@ -1,4 +1,4 @@
-"""Valida??es espec?ficas do CNAB 400 da Caixa."""
+"""Validacoes especificas do CNAB 400 da Caixa."""
 
 from .utils import _campo_cnab400, _formatar_data_br, _parse_data_cnab400, _parse_valor_cnab400
 

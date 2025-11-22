@@ -1,9 +1,9 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 
 <head>
   <meta charset="utf-8">
-  <title>Resultado da validaouo</title>
+  <title>Resultado da valida├º├úo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
@@ -49,14 +49,14 @@
       overflow-y: auto;
     }
 
-    /* Torna o cabeoalho da tabela fixo dentro do card */
+    /* Torna o cabe├ºalho da tabela fixo dentro do card */
     .table-fixed-header {
       max-height: 420px;
       overflow-y: auto;
       border: 1px solid #dee2e6;
     }
 
-    /* Cabeoalho fixo */
+    /* Cabe├ºalho fixo */
     .table-fixed-header thead th {
       position: sticky;
       top: 0;
@@ -65,7 +65,7 @@
       border-bottom: 2px solid #dee2e6;
     }
 
-    /* Divisrias verticais entre as colunas */
+    /* Divis├│rias verticais entre as colunas */
     .table-fixed-header td,
     .table-fixed-header th {
       border-right: 1px solid #e2e2e2;
@@ -145,7 +145,7 @@
       align-content: start;
     }
 
-    /* Destaque para o card de ttulos */
+    /* Destaque para o card de t├¡tulos */
     .titles-card {
       background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
       border: 1px solid #dfe6ff;
@@ -188,7 +188,7 @@
           <li class="nav-item">
             <a class="nav-link" href="/boleto">
               <i class="bi bi-upc-scan me-1"></i>
-              Linha Digitivel
+              Linha Digit├ível
             </a>
           </li>
         </ul>
@@ -227,11 +227,11 @@
     <div class="row">
       <div class="col-12 col-lg-10 mx-auto">
 
-        <!-- Cabeoalho pigina -->
+        <!-- Cabe├ºalho p├ígina -->
         <div class="page-header d-flex justify-content-between align-items-center">
           <div>
-            <h1 class="h4 mb-1">Resultado da validaouo da remessa</h1>
-            <small class="text-muted">Visuo geral e detalhes da estrutura do arquivo.</small>
+            <h1 class="h4 mb-1">Resultado da valida├º├úo da remessa</h1>
+            <small class="text-muted">Vis├úo geral e detalhes da estrutura do arquivo.</small>
           </div>
           <a href="/" class="btn btn-outline-secondary btn-sm">
             &larr; Validar outro arquivo
@@ -254,7 +254,7 @@
           <div class="alert alert-warning d-flex align-items-center mb-0" role="alert">
             <i class="bi bi-exclamation-triangle-fill me-2"></i>
             <div>
-              Nenhum erro crtico encontrado, mas existem <strong>{{ total_avisos }}</strong> aviso(s).
+              Nenhum erro cr├¡tico encontrado, mas existem <strong>{{ total_avisos }}</strong> aviso(s).
             </div>
           </div>
           {% else %}
@@ -267,7 +267,7 @@
           {% endif %}
         </div>
 
-        <!-- Resumo ripido -->
+        <!-- Resumo r├ípido -->
         <div class="summary-grid row row-cols-1 row-cols-sm-2 row-cols-xl-4 g-3 mb-4">
           <div class="col">
             <div class="summary-card">
@@ -303,7 +303,7 @@
                   N/D
                   {% endif %}
                 </div>
-                <small>{{ resultado.nome_banco or "Banco nuo identificado" }}</small>
+                <small>{{ resultado.nome_banco or "Banco n├úo identificado" }}</small>
               </div>
             </div>
           </div>
@@ -313,7 +313,7 @@
                 <i class="bi bi-collection"></i>
               </div>
               <div>
-                <div class="label">Titulos encontrados</div>
+                <div class="label">T├¡tulos encontrados</div>
                 <div class="value">
                   {{ total_titulos }}
                 </div>
@@ -340,7 +340,7 @@
                 <small>
                   {{ "erro(s)" if total_erros != 1 else "erro" }}
                   {% if total_avisos %}
-                  OCo {{ total_avisos }} aviso(s)
+                  ÔÇó {{ total_avisos }} aviso(s)
                   {% endif %}
                 </small>
               </div>
@@ -348,16 +348,16 @@
           </div>
         </div>
 
-        <!-- GRID PRINCIPAL: duas colunas em telas mdias/grandes -->
+        <!-- GRID PRINCIPAL: duas colunas em telas m├®dias/grandes -->
         <div class="row row-cols-1 row-cols-lg-2 g-3 align-items-start">
-          <!-- Coluna esquerda: informaoAes e conferncia -->
+          <!-- Coluna esquerda: informa├º├Áes e confer├¬ncia -->
           <div class="col-12 col-lg-6 card-stack">
             <div class="section-title">Arquivo e cedente</div>
 
-            <!-- InformaoAes gerais -->
+            <!-- Informa├º├Áes gerais -->
             <div class="card">
               <div class="card-header d-flex justify-content-between align-items-center">
-                <strong>Informacoes gerais</strong>
+                <strong>Informa├º├Áes gerais</strong>
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
                   data-bs-target="#collapseInfoGerais" aria-expanded="true" aria-controls="collapseInfoGerais">
                   <span class="label-btn">Recolher</span>
@@ -411,7 +411,7 @@
                     <li><strong>Banco informado:</strong> {{ dados_conta.banco }}</li>
                     {% endif %}
                     {% if dados_conta.agencia %}
-                    <li><strong>Agncia:</strong> {{ dados_conta.agencia }}</li>
+                    <li><strong>Ag├¬ncia:</strong> {{ dados_conta.agencia }}</li>
                     {% endif %}
                     {% if dados_conta.conta %}
                     <li><strong>Conta:</strong> {{ dados_conta.conta }}</li>
@@ -420,7 +420,7 @@
                     <li><strong>Documento (CPF/CNPJ):</strong> {{ dados_conta.documento }}</li>
                     {% endif %}
                     {% if dados_conta.nome %}
-                    <li><strong>Nome/Razuo social:</strong> {{ dados_conta.nome }}</li>
+                    <li><strong>Nome/Raz├úo social:</strong> {{ dados_conta.nome }}</li>
                     {% endif %}
                   </ul>
                 </div>
@@ -428,10 +428,10 @@
             </div>
             {% endif %}
 
-            <!-- Conferncia dos dados x arquivo -->
+            <!-- Confer├¬ncia dos dados x arquivo -->
             <div class="card">
               <div class="card-header d-flex justify-content-between align-items-center">
-                <strong>Conferencia dos dados da conta/titular</strong>
+                <strong>Confer├¬ncia dos dados da conta/titular</strong>
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
                   data-bs-target="#collapseConferenciaConta" aria-expanded="true"
                   aria-controls="collapseConferenciaConta">
@@ -443,7 +443,7 @@
                 <div class="card-body">
                   {% if resultado.erros_dados_conta and resultado.erros_dados_conta|length > 0 %}
                   <div class="alert alert-danger mb-2">
-                    <strong>Divergncias encontradas:</strong>
+                    <strong>Diverg├¬ncias encontradas:</strong>
                     <ul class="mb-0">
                       {% for e in resultado.erros_dados_conta %}
                       <li>{{ e }}</li>
@@ -452,7 +452,7 @@
                   </div>
                   {% else %}
                   <div class="alert alert-success mb-2">
-                    Nenhuma divergncia crtica encontrada entre os dados informados e o arquivo (para os campos
+                    Nenhuma diverg├¬ncia cr├¡tica encontrada entre os dados informados e o arquivo (para os campos
                     suportados).
                   </div>
                   {% endif %}
@@ -494,7 +494,7 @@
                   </div>
                   {% else %}
                   <div class="alert alert-success mb-0">
-                    Todas as linhas estuo com o tamanho correto.
+                    Todas as linhas est├úo com o tamanho correto.
                   </div>
                   {% endif %}
                 </div>
@@ -507,10 +507,10 @@
         <div class="section-title">Estrutura do arquivo</div>
         {% if resultado.layout == 240 %}
 
-            <!-- Estrutura bisica -->
+            <!-- Estrutura b├ísica -->
             <div class="card">
               <div class="card-header d-flex justify-content-between align-items-center">
-                <strong>Estrutura basica</strong>
+                <strong>Estrutura b├ísica</strong>
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
                   data-bs-target="#collapseEstruturaBasica" aria-expanded="true"
                   aria-controls="collapseEstruturaBasica">
@@ -531,17 +531,17 @@
                   </div>
                   {% else %}
                   <div class="alert alert-success mb-0">
-                    Header, trailer e tipos de registro estuo consistentes.
+                    Header, trailer e tipos de registro est├úo consistentes.
                   </div>
                   {% endif %}
                 </div>
               </div>
             </div>
 
-            <!-- Cdigo do banco -->
+            <!-- C├│digo do banco -->
             <div class="card">
               <div class="card-header d-flex justify-content-between align-items-center">
-                <strong>Codigo do banco</strong>
+                <strong>C├│digo do banco</strong>
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
                   data-bs-target="#collapseCodBanco" aria-expanded="true" aria-controls="collapseCodBanco">
                   <span class="label-btn">Recolher</span>
@@ -552,7 +552,7 @@
                 <div class="card-body">
                   {% if resultado.erros_banco and resultado.erros_banco|length > 0 %}
                   <div class="alert alert-danger mb-0">
-                    <p class="mb-1">Inconsistncias encontradas:</p>
+                    <p class="mb-1">Inconsist├¬ncias encontradas:</p>
                     <ul class="mb-0">
                       {% for e in resultado.erros_banco %}
                       <li>{{ e }}</li>
@@ -561,7 +561,7 @@
                   </div>
                   {% else %}
                   <div class="alert alert-success mb-0">
-                    Todas as linhas possuem o mesmo cdigo de banco do header.
+                    Todas as linhas possuem o mesmo c├│digo de banco do header.
                   </div>
                   {% endif %}
                 </div>
@@ -591,17 +591,17 @@
                   </div>
                   {% else %}
                   <div class="alert alert-success mb-0">
-                    Estrutura de lotes esti OK (header, detalhes e trailer).
+                    Estrutura de lotes est├í OK (header, detalhes e trailer).
                   </div>
                   {% endif %}
                 </div>
               </div>
             </div>
 
-            <!-- Sequncia -->
+            <!-- Sequ├¬ncia -->
             <div class="card">
               <div class="card-header d-flex justify-content-between align-items-center">
-                <strong>Sequencia dos registros</strong>
+                <strong>Sequ├¬ncia dos registros</strong>
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
                   data-bs-target="#collapseSequencia" aria-expanded="true" aria-controls="collapseSequencia">
                   <span class="label-btn">Recolher</span>
@@ -612,7 +612,7 @@
                 <div class="card-body">
                   {% if resultado.erros_sequencia and resultado.erros_sequencia|length > 0 %}
                   <div class="alert alert-danger mb-0">
-                    <p class="mb-1">Problemas na sequncia:</p>
+                    <p class="mb-1">Problemas na sequ├¬ncia:</p>
                     <ul class="mb-0">
                       {% for e in resultado.erros_sequencia %}
                       <li>{{ e }}</li>
@@ -621,7 +621,7 @@
                   </div>
                   {% else %}
                   <div class="alert alert-success mb-0">
-                    Sequncia dos registros dentro dos lotes esti correta.
+                    Sequ├¬ncia dos registros dentro dos lotes est├í correta.
                   </div>
                   {% endif %}
                 </div>
@@ -630,14 +630,14 @@
           </div>
         </div>
 
-        <!-- Seouo resumo + ttulos + segmentos: em largura total -->
+        <!-- Se├º├úo resumo + t├¡tulos + segmentos: em largura total -->
         <div class="mt-4">
           <div class="section-title">Detalhamento da remessa</div>
 
           <!-- Resumo da remessa -->
           <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
-              <strong>Resumo da remessa (titulos detectados)</strong>
+              <strong>Resumo da remessa (t├¡tulos detectados)</strong>
               <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
                 data-bs-target="#collapseResumoRemessa" aria-expanded="true" aria-controls="collapseResumoRemessa">
                 <span class="label-btn">Recolher</span>
@@ -652,9 +652,9 @@
                 <ul class="mb-0">
                   <li>
                     {% if resultado.cnab240_itau_sisdeb %}
-                    Quantidade de lanoamentos (Segmento A - SISDEB):
+                    Quantidade de lan├ºamentos (Segmento A - SISDEB):
                     {% else %}
-                    Quantidade de ttulos (Segmento P):
+                    Quantidade de t├¡tulos (Segmento P):
                     {% endif %}
                     <strong>{{ r.qtd_titulos }}</strong>
                   </li>
@@ -665,21 +665,21 @@
                     {% if r.vencimento_min %}
                     {{ r.vencimento_min.strftime("%d/%m/%Y") }}
                     {% else %}
-                    (nuo foi possvel determinar)
+                    (n├úo foi poss├¡vel determinar)
                     {% endif %}
                   </li>
                   <li>Vencimento mais recente:
                     {% if r.vencimento_max %}
                     {{ r.vencimento_max.strftime("%d/%m/%Y") }}
                     {% else %}
-                    (nuo foi possvel determinar)
+                    (n├úo foi poss├¡vel determinar)
                     {% endif %}
                   </li>
                 </ul>
                 {% else %}
                 <p class="text-muted mb-0">
                   {% if resultado.cnab240_itau_sisdeb %}
-                  Nenhum lanoamento SISDEB foi identificado para gerar o resumo.
+                  Nenhum lan├ºamento SISDEB foi identificado para gerar o resumo.
                   {% else %}
                   Nenhum Segmento P foi encontrado para gerar o resumo da remessa.
                   {% endif %}
@@ -687,156 +687,306 @@
                 {% endif %}
                 {% else %}
                 <p class="text-muted mb-0">
-                  Resumo da remessa nuo disponvel para este layout/banco.
+                  Resumo da remessa n├úo dispon├¡vel para este layout/banco.
                 </p>
                 {% endif %}
               </div>
             </div>
           </div>
 
-          {% if resultado.cnab240_itau_sisdeb %}
-          <div class="card mt-3">
+          <!-- Lista de t├¡tulos -->
+          <div class="card mb-3 border-0 titles-card">
             <div class="card-header d-flex justify-content-between align-items-center">
-              <strong>Itau SISDEB - Cabecalho do arquivo</strong>
-              <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
-                data-bs-target="#collapseItauHeader" aria-expanded="true" aria-controls="collapseItauHeader">
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-list-check fs-5"></i>
+                <div>
+                  <strong>T├¡tulos da remessa</strong>
+                  {% if resultado.titulos and resultado.titulos|length > 0 %}
+                  <span class="badge bg-light text-primary ms-2">
+                    {{ resultado.titulos|length }} t├¡tulo(s)
+                  </span>
+                  {% endif %}
+                </div>
+              </div>
+              <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseTitulos" aria-expanded="true" aria-controls="collapseTitulos">
                 <span class="label-btn">Recolher</span>
                 <i class="bi bi-chevron-up"></i>
               </button>
             </div>
-            <div id="collapseItauHeader" class="collapse show">
-              <div class="card-body">
-                {% if resultado.itau_sisdeb_erros_header and resultado.itau_sisdeb_erros_header|length > 0 %}
-                <div class="alert alert-danger mb-0">
-                  <ul class="mb-0">
-                    {% for e in resultado.itau_sisdeb_erros_header %}
-                    <li>{{ e }}</li>
-                    {% endfor %}
-                  </ul>
-                </div>
-                {% else %}
-                <div class="alert alert-success mb-0">
-                  Nenhum problema identificado no cabecalho do arquivo (validacoes SISDEB).
-                </div>
-                {% endif %}
-              </div>
-            </div>
-          </div>
+            <div id="collapseTitulos" class="collapse show">
+              <div class="card-body card-body-scroll">
+                {% if resultado.titulos and resultado.titulos|length > 0 %}
+                <div class="table-responsive">
+                  <div class="table-fixed-header">
+                    <table id="tabela-titulos" class="table table-sm table-striped align-middle mb-0">
+                      <thead class="table-light">
+                        <tr>
+                          <th scope="col">#</th>
+                          <th scope="col">Lote</th>
+                          <th scope="col">Seq.</th>
+                          <th scope="col">Nosso n├║mero</th>
+                          <th scope="col">Documento pagador</th>
+                          <th scope="col">Nome do pagador</th>
+                          <th scope="col">Endere├ºo</th>
+                          <th scope="col">
+                            {% if resultado.cnab240_itau_sisdeb %}
+                            Data agendada
+                            {% else %}
+                            Vencimento
+                            {% endif %}
+                          </th>
+                          <th scope="col" class="text-end">Valor (R$)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for t in resultado.titulos %}
+                        {% set has_r = t.r_desc2_codigo or t.r_desc3_codigo or t.r_multa_codigo %}
 
-          <div class="card mt-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <strong>Itau SISDEB - Cabecalhos de lote</strong>
-              <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
-                data-bs-target="#collapseItauLotes" aria-expanded="true" aria-controls="collapseItauLotes">
-                <span class="label-btn">Recolher</span>
-                <i class="bi bi-chevron-up"></i>
-              </button>
-            </div>
-            <div id="collapseItauLotes" class="collapse show">
-              <div class="card-body">
-                {% if resultado.itau_sisdeb_erros_lotes and resultado.itau_sisdeb_erros_lotes|length > 0 %}
-                <div class="alert alert-danger mb-0">
-                  <ul class="mb-0">
-                    {% for e in resultado.itau_sisdeb_erros_lotes %}
-                    <li>{{ e }}</li>
-                    {% endfor %}
-                  </ul>
-                </div>
-                {% else %}
-                <div class="alert alert-success mb-0">
-                  Cabecalhos de lote validados conforme o manual SISDEB.
-                </div>
-                {% endif %}
-              </div>
-            </div>
-          </div>
+                        <!-- Linha principal -->
+                        <tr {% if has_r %} data-bs-toggle="collapse" data-bs-target="#detTitulo{{ loop.index }}"
+                          class="cursor-pointer" {% endif %}>
+                          <td>{{ loop.index }}</td>
+                          <td>{{ t.lote }}</td>
+                          <td>{{ t.sequencia }}</td>
+                          <td class="fw-semibold">{{ t.nosso_numero }}</td>
+                          <td>{{ t.sacado_documento }}</td>
+                          <td>{{ t.sacado_nome }}</td>
+                          <td>
+                            {{ t.sacado_endereco }}
+                            {% if t.sacado_bairro %}<br><small>{{ t.sacado_bairro }}</small>{% endif %}
+                            {% if t.sacado_cidade %}<br><small>{{ t.sacado_cidade }} - {{ t.sacado_uf }}</small>{% endif
+                            %}
+                            {% if t.sacado_cep %}<br><small>CEP {{ t.sacado_cep }}</small>{% endif %}
+                          </td>
+                          <td>
+                            {% if t.data_vencimento_str %}
+                            {{ t.data_vencimento_str }}
+                            {% else %}
+                            -
+                            {% endif %}
+                          </td>
+                          <td class="text-end fw-semibold">
+                            {{ "%.2f"|format(t.valor_reais) }}
+                          </td>
+                        </tr>
 
-          <div class="card mt-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <strong>Itau SISDEB - Registros de detalhe (Segmento A)</strong>
-              <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
-                data-bs-target="#collapseItauDetalhes" aria-expanded="true" aria-controls="collapseItauDetalhes">
-                <span class="label-btn">Recolher</span>
-                <i class="bi bi-chevron-up"></i>
-              </button>
-            </div>
-            <div id="collapseItauDetalhes" class="collapse show">
-              <div class="card-body">
-                {% if resultado.itau_sisdeb_erros_detalhes and resultado.itau_sisdeb_erros_detalhes|length > 0 %}
-                <div class="alert alert-danger mb-0">
-                  <ul class="mb-0">
-                    {% for e in resultado.itau_sisdeb_erros_detalhes %}
-                    <li>{{ e }}</li>
-                    {% endfor %}
-                  </ul>
-                </div>
-                {% else %}
-                <div class="alert alert-success mb-0">
-                  Nenhum erro especifico nos registros de detalhe SISDEB foi identificado.
-                </div>
-                {% endif %}
-              </div>
-            </div>
-          </div>
+                        {% if has_r %}
+                        <!-- Linha de detalhes (Segmento R) -->
+                        <tr id="detTitulo{{ loop.index }}" class="collapse bg-light">
+                          <td colspan="9">
+                            <div class="titulo-detalhes">
+                              <strong>Detalhes adicionais (Segmento R)</strong>
+                              <div class="mt-2">
 
-          <div class="card mt-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <strong>Itau SISDEB - Trailer / totais</strong>
-              <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
-                data-bs-target="#collapseItauTrailer" aria-expanded="true" aria-controls="collapseItauTrailer">
-                <span class="label-btn">Recolher</span>
-                <i class="bi bi-chevron-up"></i>
-              </button>
-            </div>
-            <div id="collapseItauTrailer" class="collapse show">
-              <div class="card-body">
-                {% if resultado.itau_sisdeb_erros_trailer and resultado.itau_sisdeb_erros_trailer|length > 0 %}
-                <div class="alert alert-danger mb-0">
-                  <ul class="mb-0">
-                    {% for e in resultado.itau_sisdeb_erros_trailer %}
-                    <li>{{ e }}</li>
-                    {% endfor %}
-                  </ul>
-                </div>
-                {% else %}
-                <div class="alert alert-success mb-0">
-                  Totais do trailer (lote/arquivo) estao consistentes com os registros.
-                </div>
-                {% endif %}
-              </div>
-            </div>
-          </div>
+                                {% if t.r_desc2_codigo or t.r_desc2_valor_reais %}
+                                <div class="mb-1">
+                                  <span class="fw-semibold">Desconto 2:</span>
+                                  c├│digo {{ t.r_desc2_codigo or "-" }},
+                                  {% if t.r_desc2_data_str %} data {{ t.r_desc2_data_str }},{% endif %}
+                                  {% if t.r_desc2_valor_reais and t.r_desc2_valor_reais > 0 %}
+                                  valor R$ {{ "%.2f"|format(t.r_desc2_valor_reais) }}
+                                  {% else %}
+                                  valor n├úo informado
+                                  {% endif %}
+                                </div>
+                                {% endif %}
 
-          {% if resultado.itau_sisdeb_avisos and resultado.itau_sisdeb_avisos|length > 0 %}
-          <div class="card mt-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <strong>Alertas SISDEB</strong>
-              <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
-                data-bs-target="#collapseItauAvisos" aria-expanded="true" aria-controls="collapseItauAvisos">
-                <span class="label-btn">Recolher</span>
-                <i class="bi bi-chevron-up"></i>
-              </button>
-            </div>
-            <div id="collapseItauAvisos" class="collapse show">
-              <div class="card-body">
-                <div class="alert alert-warning mb-0">
-                  <ul class="mb-0">
-                    {% for aviso in resultado.itau_sisdeb_avisos %}
-                    <li>{{ aviso }}</li>
-                    {% endfor %}
-                  </ul>
+                                {% if t.r_desc3_codigo or t.r_desc3_valor_reais %}
+                                <div class="mb-1">
+                                  <span class="fw-semibold">Desconto 3:</span>
+                                  c├│digo {{ t.r_desc3_codigo or "-" }},
+                                  {% if t.r_desc3_data_str %} data {{ t.r_desc3_data_str }},{% endif %}
+                                  {% if t.r_desc3_valor_reais and t.r_desc3_valor_reais > 0 %}
+                                  valor R$ {{ "%.2f"|format(t.r_desc3_valor_reais) }}
+                                  {% else %}
+                                  valor n├úo informado
+                                  {% endif %}
+                                </div>
+                                {% endif %}
+
+                                {% if t.r_multa_codigo or t.r_multa_valor_reais %}
+                                <div class="mb-1">
+                                  <span class="fw-semibold">Multa:</span>
+                                  c├│digo {{ t.r_multa_codigo or "-" }},
+                                  {% if t.r_multa_data_str %} data {{ t.r_multa_data_str }},{% endif %}
+                                  {% if t.r_multa_valor_reais and t.r_multa_valor_reais > 0 %}
+                                  valor/percentual R$ {{ "%.2f"|format(t.r_multa_valor_reais) }}
+                                  {% else %}
+                                  valor/percentual n├úo informado
+                                  {% endif %}
+                                </div>
+                                {% endif %}
+
+                                {% if not (t.r_desc2_codigo or t.r_desc3_codigo or t.r_multa_codigo) %}
+                                <span class="text-muted">Nenhuma informa├º├úo adicional de Segmento R para este
+                                  t├¡tulo.</span>
+                                {% endif %}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                  {% else %}
+                  <p class="text-muted mb-0">
+                    {% if resultado.cnab240_itau_sisdeb %}
+                    Nenhum lan├ºamento SISDEB foi identificado para listar.
+                    {% else %}
+                    Nenhum t├¡tulo (Segmento P/Q) foi identificado para listar.
+                    {% endif %}
+                  </p>
+                  {% endif %}
                 </div>
               </div>
             </div>
+            {% if resultado.cnab240_itau_sisdeb %}
+            <div class="card mt-3">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Ita├║ SISDEB - Header de arquivo</strong>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                  data-bs-target="#collapseItauHeader" aria-expanded="true" aria-controls="collapseItauHeader">
+                  <span class="label-btn">Recolher</span>
+                  <i class="bi bi-chevron-up"></i>
+                </button>
+              </div>
+              <div id="collapseItauHeader" class="collapse show">
+                <div class="card-body">
+                  {% if resultado.itau_sisdeb_erros_header and resultado.itau_sisdeb_erros_header|length > 0 %}
+                  <div class="alert alert-danger mb-0">
+                    <ul class="mb-0">
+                      {% for e in resultado.itau_sisdeb_erros_header %}
+                      <li>{{ e }}</li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                  {% else %}
+                  <div class="alert alert-success mb-0">
+                    Nenhum problema identificado no header do arquivo (valida├º├Áes SISDEB).
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <div class="card mt-3">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Ita├║ SISDEB - Headers de lote</strong>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                  data-bs-target="#collapseItauLotes" aria-expanded="true" aria-controls="collapseItauLotes">
+                  <span class="label-btn">Recolher</span>
+                  <i class="bi bi-chevron-up"></i>
+                </button>
+              </div>
+              <div id="collapseItauLotes" class="collapse show">
+                <div class="card-body">
+                  {% if resultado.itau_sisdeb_erros_lotes and resultado.itau_sisdeb_erros_lotes|length > 0 %}
+                  <div class="alert alert-danger mb-0">
+                    <ul class="mb-0">
+                      {% for e in resultado.itau_sisdeb_erros_lotes %}
+                      <li>{{ e }}</li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                  {% else %}
+                  <div class="alert alert-success mb-0">
+                    Cabecalhos de lote validados conforme o manual SISDEB.
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <div class="card mt-3">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Ita├║ SISDEB - Registros de detalhe (Segmento A)</strong>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                  data-bs-target="#collapseItauDetalhes" aria-expanded="true" aria-controls="collapseItauDetalhes">
+                  <span class="label-btn">Recolher</span>
+                  <i class="bi bi-chevron-up"></i>
+                </button>
+              </div>
+              <div id="collapseItauDetalhes" class="collapse show">
+                <div class="card-body">
+                  {% if resultado.itau_sisdeb_erros_detalhes and resultado.itau_sisdeb_erros_detalhes|length > 0 %}
+                  <div class="alert alert-danger mb-0">
+                    <ul class="mb-0">
+                      {% for e in resultado.itau_sisdeb_erros_detalhes %}
+                      <li>{{ e }}</li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                  {% else %}
+                  <div class="alert alert-success mb-0">
+                    Nenhum erro espec├¡fico nos registros de detalhe SISDEB foi identificado.
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <div class="card mt-3">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Ita├║ SISDEB - Trailer / totais</strong>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                  data-bs-target="#collapseItauTrailer" aria-expanded="true" aria-controls="collapseItauTrailer">
+                  <span class="label-btn">Recolher</span>
+                  <i class="bi bi-chevron-up"></i>
+                </button>
+              </div>
+              <div id="collapseItauTrailer" class="collapse show">
+                <div class="card-body">
+                  {% if resultado.itau_sisdeb_erros_trailer and resultado.itau_sisdeb_erros_trailer|length > 0 %}
+                  <div class="alert alert-danger mb-0">
+                    <ul class="mb-0">
+                      {% for e in resultado.itau_sisdeb_erros_trailer %}
+                      <li>{{ e }}</li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                  {% else %}
+                  <div class="alert alert-success mb-0">
+                    Totais do trailer (lote/arquivo) est├úo consistentes com os registros.
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            {% if resultado.itau_sisdeb_avisos and resultado.itau_sisdeb_avisos|length > 0 %}
+            <div class="card mt-3">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Alertas SISDEB</strong>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                  data-bs-target="#collapseItauAvisos" aria-expanded="true" aria-controls="collapseItauAvisos">
+                  <span class="label-btn">Recolher</span>
+                  <i class="bi bi-chevron-up"></i>
+                </button>
+              </div>
+              <div id="collapseItauAvisos" class="collapse show">
+                <div class="card-body">
+                  <div class="alert alert-warning mb-0">
+                    <ul class="mb-0">
+                      {% for aviso in resultado.itau_sisdeb_avisos %}
+                      <li>{{ aviso }}</li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+            {% endif %}
           </div>
-          {% endif %}
-          {% endif %}
 
           {% if not resultado.cnab240_itau_sisdeb %}
           <!-- Segmentos -->
           <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
-              <strong>Validacoes de segmentos (P, Q, etc.)</strong>
+              <strong>Valida├º├Áes de segmentos (P, Q, etc.)</strong>
               <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
                 data-bs-target="#collapseSegmentos" aria-expanded="true" aria-controls="collapseSegmentos">
                 <span class="label-btn">Recolher</span>
@@ -894,7 +1044,7 @@
                   {% endif %}
 
                   {% if resultado.avisos_segmentos_convenio and resultado.avisos_segmentos_convenio|length > 0 %}
-                  <div class="fw-semibold small mt-2 mb-1">Convnio / Carteira / Nosso Nmero</div>
+                  <div class="fw-semibold small mt-2 mb-1">Conv├¬nio / Carteira / Nosso N├║mero</div>
                   <ul class="list-unstyled mb-1">
                     {% for a in resultado.avisos_segmentos_convenio %}
                     <li class="mb-1 d-flex">
@@ -954,7 +1104,7 @@
                 <div class="alert alert-warning mb-3">
                   <div class="d-flex align-items-center mb-2">
                     <i class="bi bi-exclamation-circle text-warning me-2"></i>
-                    <strong>Avisos OCo Segmento R ({{ resultado.avisos_segmentos_r|length }})</strong>
+                    <strong>Avisos ÔÇö Segmento R ({{ resultado.avisos_segmentos_r|length }})</strong>
                   </div>
 
                   <ul class="list-unstyled mb-0">
@@ -979,12 +1129,11 @@
             </div>
           </div>
           {% endif %}
-          {% endif %}
         </div>
-        {% if resultado.layout == 400 %}
+        {% elif resultado.layout == 400 %}
         <div class="card mb-3">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <strong>Cabecalho do arquivo</strong>
+            <strong>Header do arquivo</strong>
             <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
               data-bs-target="#collapseHeader400" aria-expanded="true" aria-controls="collapseHeader400">
               <span class="label-btn">Recolher</span>
@@ -996,12 +1145,12 @@
               {% set header = resultado.cnab400_header_info %}
               {% if header %}
               <ul class="list-unstyled small mb-3">
-                <li><strong>Nome do beneficiirio:</strong> {{ header.nome_beneficiario or "-" }}</li>
-                <li><strong>Agncia:</strong> {{ header.agencia }}{% if header.agencia_dv %}-{{ header.agencia_dv }}{% endif %}</li>
+                <li><strong>Nome do benefici├írio:</strong> {{ header.nome_beneficiario or "-" }}</li>
+                <li><strong>Ag├¬ncia:</strong> {{ header.agencia }}{% if header.agencia_dv %}-{{ header.agencia_dv }}{% endif %}</li>
                 <li><strong>Conta:</strong> {{ header.conta }}{% if header.conta_dv %}-{{ header.conta_dv }}{% endif %}</li>
-                <li><strong>Convnio lder:</strong> {{ header.numero_convenio_lider or "-" }}</li>
+                <li><strong>Conv├¬nio l├¡der:</strong> {{ header.numero_convenio_lider or "-" }}</li>
                 <li><strong>Seq. remessa:</strong> {{ header.sequencial_remessa or "-" }}</li>
-                <li><strong>Data de gravaouo:</strong>
+                <li><strong>Data de grava├º├úo:</strong>
                   {% if header.data_gravacao %}{{ header.data_gravacao.strftime("%d/%m/%Y") }}{% else %}-{% endif %}
                 </li>
               </ul>
@@ -1016,7 +1165,7 @@
               </div>
               {% else %}
               <div class="alert alert-success mb-0">
-                Nenhum problema crtico identificado no header.
+                Nenhum problema cr├¡tico identificado no header.
               </div>
               {% endif %}
             </div>
@@ -1045,7 +1194,7 @@
               </div>
               {% else %}
               <div class="alert alert-success mb-0">
-                Nenhum erro crtico foi encontrado nos registros de detalhe.
+                Nenhum erro cr├¡tico foi encontrado nos registros de detalhe.
               </div>
               {% endif %}
             </div>
@@ -1054,7 +1203,7 @@
 
         <div class="card mb-3">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <strong>Trailer e sequncia</strong>
+            <strong>Trailer e sequ├¬ncia</strong>
             <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
               data-bs-target="#collapseTrailer400" aria-expanded="true" aria-controls="collapseTrailer400">
               <span class="label-btn">Recolher</span>
@@ -1073,7 +1222,7 @@
               </div>
               {% else %}
               <div class="alert alert-success mb-0">
-                Trailer e sequncia geral estuo consistentes.
+                Trailer e sequ├¬ncia geral est├úo consistentes.
               </div>
               {% endif %}
             </div>
@@ -1118,7 +1267,7 @@
               {% set resumo = resultado.resumo_cnab400 %}
               {% if resumo %}
               <ul class="list-unstyled small mb-3">
-                <li><strong>Titulos:</strong> {{ resumo.qtd_titulos }}</li>
+                <li><strong>T├¡tulos:</strong> {{ resumo.qtd_titulos }}</li>
                 <li><strong>Valor total:</strong> R$ {{ "%.2f"|format(resumo.valor_total_reais) }}</li>
                 <li><strong>Vencimento mais antigo:</strong>
                   {% if resumo.vencimento_min %}{{ resumo.vencimento_min.strftime("%d/%m/%Y") }}{% else %}-{% endif %}
@@ -1129,7 +1278,7 @@
                 <li><strong>Registros opcionais (tipo 5):</strong> {{ resumo.qtd_registros_tipo5 }}</li>
               </ul>
               {% if resumo.comandos and resumo.comandos|length > 0 %}
-              <div class="fw-semibold small text-uppercase text-muted mb-1">Distribuiouo por comando</div>
+              <div class="fw-semibold small text-uppercase text-muted mb-1">Distribui├º├úo por comando</div>
               <div class="d-flex flex-wrap gap-1 mb-2">
                 {% for cmd in resumo.comandos %}
                 <span class="badge bg-light text-dark">Cmd {{ cmd.codigo }}: {{ cmd.quantidade }}</span>
@@ -1145,329 +1294,209 @@
               </div>
               {% endif %}
               {% else %}
-              <p class="text-muted mb-0">Resumo nuo disponvel para este arquivo.</p>
+              <p class="text-muted mb-0">Resumo n├úo dispon├¡vel para este arquivo.</p>
               {% endif %}
             </div>
           </div>
         </div>
 
-        {% endif %}
-
-        <div class="mt-4">
-          <div class="section-title">Consulta detalhada</div>
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h2 class="h5 mb-0">Titulos da remessa</h2>
-            {% if resultado.titulos and resultado.titulos|length > 0 %}
-            <span class="badge bg-primary bg-opacity-10 text-primary">
-              {{ resultado.titulos|length }} titulo(s)
-            </span>
-            {% endif %}
-          </div>
-
-          <ul class="nav nav-tabs" id="abaTitulosNav" role="tablist">
-            <li class="nav-item" role="presentation">
-              <button class="nav-link active" id="tab-titulos-lista" data-bs-toggle="tab"
-                data-bs-target="#tabTitulosLista" type="button" role="tab" aria-controls="tabTitulosLista"
-                aria-selected="true">
-                Visualizacao
-              </button>
-            </li>
-          </ul>
-
-          <div class="tab-content border border-top-0 rounded-bottom shadow-sm bg-white" id="abaTitulosContent">
-            <div class="tab-pane fade show active p-3" id="tabTitulosLista" role="tabpanel"
-              aria-labelledby="tab-titulos-lista">
+        <div class="card mb-3">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+              <strong>T├¡tulos da remessa</strong>
               {% if resultado.titulos and resultado.titulos|length > 0 %}
-              {% if resultado.layout == 240 %}
-              <div class="card-body-scroll">
-                <div class="table-responsive">
-                  <div class="table-fixed-header">
-                    <table id="tabela-titulos" class="table table-sm table-striped align-middle mb-0">
-                      <thead class="table-light">
-                        <tr>
-                          <th scope="col">#</th>
-                          <th scope="col">Lote</th>
-                          <th scope="col">Seq.</th>
-                          <th scope="col">Nosso numero</th>
-                          <th scope="col">Documento pagador</th>
-                          <th scope="col">Nome do pagador</th>
-                          <th scope="col">Endereco</th>
-                          <th scope="col">
-                            {% if resultado.cnab240_itau_sisdeb %}
-                            Data agendada
-                            {% else %}
-                            Vencimento
-                            {% endif %}
-                          </th>
-                          <th scope="col" class="text-end">Valor (R$)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {% for t in resultado.titulos %}
-                        {% set has_r = t.r_desc2_codigo or t.r_desc3_codigo or t.r_multa_codigo %}
-                        <tr {% if has_r %} data-bs-toggle="collapse" data-bs-target="#detTitulo{{ loop.index }}"
-                          class="cursor-pointer" {% endif %}>
-                          <td>{{ loop.index }}</td>
-                          <td>{{ t.lote }}</td>
-                          <td>{{ t.sequencia }}</td>
-                          <td class="fw-semibold">{{ t.nosso_numero }}</td>
-                          <td>{{ t.sacado_documento }}</td>
-                          <td>{{ t.sacado_nome }}</td>
-                          <td>
-                            {{ t.sacado_endereco }}
-                            {% if t.sacado_bairro %}<br><small>{{ t.sacado_bairro }}</small>{% endif %}
-                            {% if t.sacado_cidade %}<br><small>{{ t.sacado_cidade }} - {{ t.sacado_uf }}</small>{% endif %}
-                            {% if t.sacado_cep %}<br><small>CEP {{ t.sacado_cep }}</small>{% endif %}
-                          </td>
-                          <td>
-                            {% if t.data_vencimento_str %}
-                            {{ t.data_vencimento_str }}
-                            {% else %}
-                            -
-                            {% endif %}
-                          </td>
-                          <td class="text-end fw-semibold">
-                            {{ "%.2f"|format(t.valor_reais) }}
-                          </td>
-                        </tr>
-                        {% if has_r %}
-                        <tr id="detTitulo{{ loop.index }}" class="collapse bg-light">
-                          <td colspan="9">
-                            <div class="titulo-detalhes">
-                              <strong>Detalhes adicionais (Segmento R)</strong>
-                              <div class="mt-2">
-                                {% if t.r_desc2_codigo or t.r_desc2_valor_reais %}
-                                <div class="mb-1">
-                                  <span class="fw-semibold">Desconto 2:</span>
-                                  codigo {{ t.r_desc2_codigo or "-" }},
-                                  {% if t.r_desc2_data_str %} data {{ t.r_desc2_data_str }},{% endif %}
-                                  {% if t.r_desc2_valor_reais and t.r_desc2_valor_reais > 0 %}
-                                  valor R$ {{ "%.2f"|format(t.r_desc2_valor_reais) }}
-                                  {% else %}
-                                  valor nao informado
-                                  {% endif %}
-                                </div>
-                                {% endif %}
-                                {% if t.r_desc3_codigo or t.r_desc3_valor_reais %}
-                                <div class="mb-1">
-                                  <span class="fw-semibold">Desconto 3:</span>
-                                  codigo {{ t.r_desc3_codigo or "-" }},
-                                  {% if t.r_desc3_data_str %} data {{ t.r_desc3_data_str }},{% endif %}
-                                  {% if t.r_desc3_valor_reais and t.r_desc3_valor_reais > 0 %}
-                                  valor R$ {{ "%.2f"|format(t.r_desc3_valor_reais) }}
-                                  {% else %}
-                                  valor nao informado
-                                  {% endif %}
-                                </div>
-                                {% endif %}
-                                {% if t.r_multa_codigo or t.r_multa_valor_reais %}
-                                <div class="mb-1">
-                                  <span class="fw-semibold">Multa:</span>
-                                  codigo {{ t.r_multa_codigo or "-" }},
-                                  {% if t.r_multa_data_str %} data {{ t.r_multa_data_str }},{% endif %}
-                                  {% if t.r_multa_valor_reais and t.r_multa_valor_reais > 0 %}
-                                  valor/percentual R$ {{ "%.2f"|format(t.r_multa_valor_reais) }}
-                                  {% else %}
-                                  valor/percentual nao informado
-                                  {% endif %}
-                                </div>
-                                {% endif %}
-                                {% if not (t.r_desc2_codigo or t.r_desc3_codigo or t.r_multa_codigo) %}
-                                <span class="text-muted">Nenhuma informacao adicional de Segmento R para este
-                                  titulo.</span>
-                                {% endif %}
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                        {% endif %}
-                        {% endfor %}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-              {% elif resultado.layout == 400 %}
-              <div class="card-body-scroll">
-                <div class="table-responsive">
-                  <div class="table-fixed-header">
-                    <table class="table table-sm table-striped align-middle mb-0">
-                      <thead class="table-light">
-                        <tr>
-                          <th scope="col">#</th>
-                          <th scope="col">Seq.</th>
-                          <th scope="col">Nosso numero</th>
-                          <th scope="col">Seu numero</th>
-                          <th scope="col">Pagador</th>
-                          <th scope="col">Documento</th>
-                          <th scope="col">Vencimento</th>
-                          <th scope="col" class="text-end">Valor (R$)</th>
-                          <th scope="col">Comando</th>
-                          <th scope="col">Carteira</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {% for t in resultado.titulos %}
-                        {% set has_extra = (
-                          t.endereco_pagador or t.bairro_pagador or t.cidade_pagador or t.uf_pagador or
-                          t.desconto_valor_centavos or t.multa_codigo or
-                          (t.emails_pagador and t.emails_pagador|length > 0) or
-                          t.observacoes or t.opcional_desc2_valor_reais or t.opcional_desc3_valor_reais or
-                          t.valor_abatimento_centavos or t.valor_iof_centavos or t.juros_centavos or
-                          t.agente_negativador
-                        ) %}
-                        <tr {% if has_extra %} data-bs-toggle="collapse" data-bs-target="#detTitulo400{{ loop.index }}"
-                          class="cursor-pointer" {% endif %}>
-                          <td>{{ loop.index }}</td>
-                          <td>{{ t.sequencial_registro }}</td>
-                          <td>{{ t.nosso_numero or '-' }}</td>
-                          <td>{{ t.seu_numero_15 or t.seu_numero or '-' }}</td>
-                          <td>{{ t.nome_pagador or '-' }}</td>
-                          <td>{{ t.documento_pagador or '-' }}</td>
-                          <td>
-                            {% if t.data_vencimento_str %}
-                            {{ t.data_vencimento_str }}
-                            {% else %}
-                            -
-                            {% endif %}
-                          </td>
-                          <td class="text-end">
-                            {{ "%.2f"|format(t.valor_reais) }}
-                          </td>
-                          <td>{{ t.comando or '-' }}</td>
-                          <td>{{ t.carteira or '-' }}</td>
-                        </tr>
-                        {% if has_extra %}
-                        <tr id="detTitulo400{{ loop.index }}" class="collapse bg-light">
-                          <td colspan="10">
-                            <div class="titulo-detalhes">
-                              <div class="mb-2">
-                                <strong>Pagador:</strong> {{ t.nome_pagador or '-' }} - Doc: {{ t.documento_pagador or '-' }}
-                                <br>
-                                <small>Tipo doc: {{ t.tipo_inscricao_pagador or '-' }}
-                                  | Indicador parcial: {{ t.indicador_recebimento_parcial or '-' }}
-                                  | Dias protesto: {{ t.dias_protesto or '-' }}</small>
-                              </div>
-                              {% if t.endereco_pagador or t.cidade_pagador or t.uf_pagador %}
-                              <div class="mb-2">
-                                <strong>Endereco:</strong>
-                                {{ t.endereco_pagador or '-' }}
-                                {% if t.bairro_pagador %} - {{ t.bairro_pagador }}{% endif %}
-                                <br>
-                                <small>{{ t.cidade_pagador or '' }}{% if t.uf_pagador %} - {{ t.uf_pagador }}{% endif %}
-                                  {% if t.cep_pagador %}| CEP {{ t.cep_pagador }}{% endif %}</small>
-                              </div>
-                              {% endif %}
-                              <div class="row">
-                                <div class="col-md-6">
-                                  <div class="mb-2">
-                                    <strong>Descontos:</strong>
-                                    {% if t.desconto_valor_centavos %}
-                                    R$ {{ "%.2f"|format(t.desconto_valor_reais) }}
-                                    {% else %}
-                                    (nao informado)
-                                    {% endif %}
-                                    {% if t.desconto_data_str %} - ate {{ t.desconto_data_str }}{% endif %}
-                                  </div>
-                                  {% if t.opcional_desc2_valor_reais or t.opcional_desc2_data_str %}
-                                  <div class="mb-2">
-                                    <strong>2o Desconto:</strong>
-                                    {% if t.opcional_desc2_valor_reais %}
-                                    R$ {{ "%.2f"|format(t.opcional_desc2_valor_reais) }}
-                                    {% else %}-{% endif %}
-                                    {% if t.opcional_desc2_data_str %} - {{ t.opcional_desc2_data_str }}{% endif %}
-                                  </div>
-                                  {% endif %}
-                                  {% if t.opcional_desc3_valor_reais or t.opcional_desc3_data_str %}
-                                  <div class="mb-2">
-                                    <strong>3o Desconto:</strong>
-                                    {% if t.opcional_desc3_valor_reais %}
-                                    R$ {{ "%.2f"|format(t.opcional_desc3_valor_reais) }}
-                                    {% else %}-{% endif %}
-                                    {% if t.opcional_desc3_data_str %} - {{ t.opcional_desc3_data_str }}{% endif %}
-                                  </div>
-                                  {% endif %}
-                                  {% if t.multa_codigo %}
-                                  <div class="mb-2">
-                                    <strong>Multa:</strong> codigo {{ t.multa_codigo }},
-                                    {% if t.multa_valor_reais %}
-                                    valor R$ {{ "%.2f"|format(t.multa_valor_reais) }}
-                                    {% else %}
-                                    valor nao informado
-                                    {% endif %}
-                                    {% if t.multa_data_str %} - inicio {{ t.multa_data_str }}{% endif %}
-                                  </div>
-                                  {% endif %}
-                                  <div class="mb-2">
-                                    <strong>Juros de mora:</strong> R$ {{ "%.2f"|format(t.juros_reais) }}
-                                  </div>
-                                  <div class="mb-2">
-                                    <strong>Abatimento:</strong> R$ {{ "%.2f"|format(t.valor_abatimento_reais) }}
-                                  </div>
-                                  <div class="mb-2">
-                                    <strong>IOF:</strong> R$ {{ "%.2f"|format(t.valor_iof_reais) }}
-                                  </div>
-                                </div>
-                                <div class="col-md-6">
-                                  <div class="mb-2">
-                                    <strong>Carteira/variacao:</strong> {{ t.carteira or '-' }} / {{ t.variacao_carteira or '-' }}
-                                  </div>
-                                  <div class="mb-2">
-                                    <strong>Tipo de cobranca:</strong> {{ t.tipo_cobranca or '-' }}
-                                  </div>
-                                  <div class="mb-2">
-                                    <strong>Instrucoes:</strong> {{ t.instrucao1 or '-' }} / {{ t.instrucao2 or '-' }}
-                                  </div>
-                                  <div class="mb-2">
-                                    <strong>Seu numero:</strong> {{ t.seu_numero_15 or t.seu_numero or '-' }}
-                                  </div>
-                                  <div class="mb-2">
-                                    <strong>Numero banco / agencia cobradora:</strong>
-                                    {{ t.numero_banco or '-' }} / {{ t.agencia_cobradora or '-' }}
-                                  </div>
-                                  {% if t.agente_negativador %}
-                                  <div class="mb-2">
-                                    <strong>Agente negativador:</strong> {{ t.agente_negativador }}
-                                  </div>
-                                  {% endif %}
-                                </div>
-                              </div>
-                              {% if t.emails_pagador and t.emails_pagador|length > 0 %}
-                              <div class="mb-2">
-                                <strong>E-mails do pagador:</strong>
-                                <div class="small">
-                                  {{ t.emails_pagador|join(', ') }}
-                                </div>
-                              </div>
-                              {% endif %}
-                              {% if t.observacoes %}
-                              <div class="mb-0">
-                                <strong>Observacoes:</strong> {{ t.observacoes }}
-                              </div>
-                              {% endif %}
-                            </div>
-                          </td>
-                        </tr>
-                        {% endif %}
-                        {% endfor %}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-              {% else %}
-              <div class="alert alert-info mb-0">
-                Formato de layout nao suportado para listagem de titulos.
-              </div>
+              <span class="badge bg-secondary ms-2">
+                {{ resultado.titulos|length }} t├¡tulo(s)
+              </span>
               {% endif %}
-              {% else %}
-              <div class="alert alert-light mb-0">
-                Nenhum titulo foi identificado para listar.
+            </div>
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
+              data-bs-target="#collapseTitulos400" aria-expanded="true" aria-controls="collapseTitulos400">
+              <span class="label-btn">Recolher</span>
+              <i class="bi bi-chevron-up"></i>
+            </button>
+          </div>
+          <div id="collapseTitulos400" class="collapse show">
+            <div class="card-body card-body-scroll">
+              {% if resultado.titulos and resultado.titulos|length > 0 %}
+              <div class="table-responsive">
+                <div class="table-fixed-header">
+                  <table class="table table-sm table-striped align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Seq.</th>
+                        <th scope="col">Nosso n├║mero</th>
+                        <th scope="col">Seu n├║mero</th>
+                        <th scope="col">Pagador</th>
+                        <th scope="col">Documento</th>
+                        <th scope="col">Vencimento</th>
+                        <th scope="col" class="text-end">Valor (R$)</th>
+                        <th scope="col">Comando</th>
+                        <th scope="col">Carteira</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for t in resultado.titulos %}
+                      {% set has_extra = (
+                        t.endereco_pagador or t.bairro_pagador or t.cidade_pagador or t.uf_pagador or
+                        t.desconto_valor_centavos or t.multa_codigo or
+                        (t.emails_pagador and t.emails_pagador|length > 0) or
+                        t.observacoes or t.opcional_desc2_valor_reais or t.opcional_desc3_valor_reais or
+                        t.valor_abatimento_centavos or t.valor_iof_centavos or t.juros_centavos or
+                        t.agente_negativador
+                      ) %}
+                      <tr {% if has_extra %} data-bs-toggle="collapse" data-bs-target="#detTitulo400{{ loop.index }}"
+                        class="cursor-pointer" {% endif %}>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ t.sequencial_registro }}</td>
+                        <td>{{ t.nosso_numero or '-' }}</td>
+                        <td>{{ t.seu_numero_15 or t.seu_numero or '-' }}</td>
+                        <td>{{ t.nome_pagador or '-' }}</td>
+                        <td>{{ t.documento_pagador or '-' }}</td>
+                        <td>
+                          {% if t.data_vencimento_str %}
+                          {{ t.data_vencimento_str }}
+                          {% else %}
+                          -
+                          {% endif %}
+                        </td>
+                        <td class="text-end">
+                          {{ "%.2f"|format(t.valor_reais) }}
+                        </td>
+                        <td>{{ t.comando or '-' }}</td>
+                        <td>{{ t.carteira or '-' }}</td>
+                      </tr>
+                      {% if has_extra %}
+                      <tr id="detTitulo400{{ loop.index }}" class="collapse bg-light">
+                        <td colspan="10">
+                          <div class="titulo-detalhes">
+                            <div class="mb-2">
+                              <strong>Pagador:</strong> {{ t.nome_pagador or '-' }} ÔÇö Doc: {{ t.documento_pagador or '-' }}
+                              <br>
+                              <small>Tipo doc: {{ t.tipo_inscricao_pagador or '-' }}
+                                | Indicador parcial: {{ t.indicador_recebimento_parcial or '-' }}
+                                | Dias protesto: {{ t.dias_protesto or '-' }}</small>
+                            </div>
+                            {% if t.endereco_pagador or t.cidade_pagador or t.uf_pagador %}
+                            <div class="mb-2">
+                              <strong>Endere├ºo:</strong>
+                              {{ t.endereco_pagador or '-' }}
+                              {% if t.bairro_pagador %} ÔÇö {{ t.bairro_pagador }}{% endif %}
+                              <br>
+                              <small>{{ t.cidade_pagador or '' }}{% if t.uf_pagador %} - {{ t.uf_pagador }}{% endif %}
+                                {% if t.cep_pagador %}| CEP {{ t.cep_pagador }}{% endif %}</small>
+                            </div>
+                            {% endif %}
+                            <div class="row">
+                              <div class="col-md-6">
+                                <div class="mb-2">
+                                  <strong>Descontos:</strong>
+                                  {% if t.desconto_valor_centavos %}
+                                  R$ {{ "%.2f"|format(t.desconto_valor_reais) }}
+                                  {% else %}
+                                  (n├úo informado)
+                                  {% endif %}
+                                  {% if t.desconto_data_str %} ÔÇö at├® {{ t.desconto_data_str }}{% endif %}
+                                </div>
+                                {% if t.opcional_desc2_valor_reais or t.opcional_desc2_data_str %}
+                                <div class="mb-2">
+                                  <strong>2┬║ Desconto:</strong>
+                                  {% if t.opcional_desc2_valor_reais %}
+                                  R$ {{ "%.2f"|format(t.opcional_desc2_valor_reais) }}
+                                  {% else %}-{% endif %}
+                                  {% if t.opcional_desc2_data_str %} ÔÇö {{ t.opcional_desc2_data_str }}{% endif %}
+                                </div>
+                                {% endif %}
+                                {% if t.opcional_desc3_valor_reais or t.opcional_desc3_data_str %}
+                                <div class="mb-2">
+                                  <strong>3┬║ Desconto:</strong>
+                                  {% if t.opcional_desc3_valor_reais %}
+                                  R$ {{ "%.2f"|format(t.opcional_desc3_valor_reais) }}
+                                  {% else %}-{% endif %}
+                                  {% if t.opcional_desc3_data_str %} ÔÇö {{ t.opcional_desc3_data_str }}{% endif %}
+                                </div>
+                                {% endif %}
+                                {% if t.multa_codigo %}
+                                <div class="mb-2">
+                                  <strong>Multa:</strong> c├│digo {{ t.multa_codigo }},
+                                  {% if t.multa_valor_reais %}
+                                  valor R$ {{ "%.2f"|format(t.multa_valor_reais) }}
+                                  {% else %}
+                                  valor n├úo informado
+                                  {% endif %}
+                                  {% if t.multa_data_str %} ÔÇö in├¡cio {{ t.multa_data_str }}{% endif %}
+                                </div>
+                                {% endif %}
+                                <div class="mb-2">
+                                  <strong>Juros de mora:</strong> R$ {{ "%.2f"|format(t.juros_reais) }}
+                                </div>
+                                <div class="mb-2">
+                                  <strong>Abatimento:</strong> R$ {{ "%.2f"|format(t.valor_abatimento_reais) }}
+                                </div>
+                                <div class="mb-2">
+                                  <strong>IOF:</strong> R$ {{ "%.2f"|format(t.valor_iof_reais) }}
+                                </div>
+                              </div>
+                              <div class="col-md-6">
+                                <div class="mb-2">
+                                  <strong>Carteira/varia├º├úo:</strong> {{ t.carteira or '-' }} / {{ t.variacao_carteira or '-' }}
+                                </div>
+                                <div class="mb-2">
+                                  <strong>Tipo de cobran├ºa:</strong> {{ t.tipo_cobranca or '-' }}
+                                </div>
+                                <div class="mb-2">
+                                  <strong>Instru├º├Áes:</strong> {{ t.instrucao1 or '-' }} / {{ t.instrucao2 or '-' }}
+                                </div>
+                                <div class="mb-2">
+                                  <strong>Seu n├║mero:</strong> {{ t.seu_numero_15 or t.seu_numero or '-' }}
+                                </div>
+                                <div class="mb-2">
+                                  <strong>N├║mero banco / ag├¬ncia cobradora:</strong>
+                                  {{ t.numero_banco or '-' }} / {{ t.agencia_cobradora or '-' }}
+                                </div>
+                                {% if t.agente_negativador %}
+                                <div class="mb-2">
+                                  <strong>Agente negativador:</strong> {{ t.agente_negativador }}
+                                </div>
+                                {% endif %}
+                              </div>
+                            </div>
+                            {% if t.emails_pagador and t.emails_pagador|length > 0 %}
+                            <div class="mb-2">
+                              <strong>E-mails do pagador:</strong>
+                              <div class="small">
+                                {{ t.emails_pagador|join(', ') }}
+                              </div>
+                            </div>
+                            {% endif %}
+                            {% if t.observacoes %}
+                            <div class="mb-0">
+                              <strong>Observa├º├Áes:</strong> {{ t.observacoes }}
+                            </div>
+                            {% endif %}
+                          </div>
+                        </td>
+                      </tr>
+                      {% endif %}
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
               </div>
+              {% else %}
+              <p class="text-muted mb-0">
+                Nenhum registro tipo 7 foi identificado para listar.
+              </p>
               {% endif %}
             </div>
           </div>
         </div>
+        {% else %}
+        <div class="alert alert-info">
+          Ainda n├úo h├í painel espec├¡fico para o layout CNAB {{ resultado.layout }}.
+        </div>
+        {% endif %}
 
       </div>
     </div>
@@ -1475,7 +1504,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Script para alternar cone e texto dos botAes de recolher/expandir -->
+  <!-- Script para alternar ├¡cone e texto dos bot├Áes de recolher/expandir -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(function (btn) {

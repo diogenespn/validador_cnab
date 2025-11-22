@@ -156,7 +156,7 @@ def main():
         else:
             analise = validar_cnab400_bb(linhas)
 
-        codigo_banco = analise.get("codigo_banco") or "???"
+        codigo_banco = analise.get("codigo_banco") or "N/D"
         nome_banco = analise.get("nome_banco") or "Banco nao identificado"
         print(f"Banco detectado: {codigo_banco} - {nome_banco}")
 

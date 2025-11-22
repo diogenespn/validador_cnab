@@ -1,4 +1,4 @@
-"""Valida??es espec?ficas do CNAB 400 do Banco do Brasil."""
+"""Validacoes especificas do CNAB 400 do Banco do Brasil."""
 
 from collections import Counter
 from datetime import datetime

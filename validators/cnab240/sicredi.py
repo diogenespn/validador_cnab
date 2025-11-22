@@ -1,4 +1,4 @@
-"""Valida??es espec?ficas do Sicredi para CNAB 240."""
+"""Validacoes especificas do Sicredi para CNAB 240."""
 
 from ..base import ESTADOS_BR
 from .common import LAYOUT_CNAB240_COMUM_PQ, LAYOUTS_CNAB240

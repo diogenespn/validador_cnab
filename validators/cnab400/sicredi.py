@@ -1,4 +1,4 @@
-"""Valida??es espec?ficas do CNAB 400 do Sicredi."""
+"""Validacoes especificas do CNAB 400 do Sicredi."""
 
 from .constants import (
     CNAB400_SICREDI_CODIGO_BANCO,

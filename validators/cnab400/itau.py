@@ -1,4 +1,4 @@
-"""Valida??es espec?ficas do CNAB 400 do Ita?."""
+"""Validacoes especificas do CNAB 400 do Itau."""
 
 from ..base import ESTADOS_BR
 from .constants import (
