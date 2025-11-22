@@ -2,8 +2,8 @@
 
 from ..base import ESTADOS_BR
 from .constants import (
-    CNAB400_BB_ESPECIES_VALIDAS,
     CNAB400_ITAU_CODIGO_BANCO,
+    CNAB400_ITAU_ESPECIES_VALIDAS,
     CNAB400_ITAU_TIPOS_INSCRICAO,
     CNAB400_ITAU_TIPOS_MOEDA,
 )
@@ -158,9 +158,9 @@ def validar_cnab400_itau(linhas):
                     f"Linha {numero_linha}: agência cobradora (pos. 143-147) deve ser numérica."
                 )
             especie = _campo_cnab400(registro, 148, 149).strip()
-            if especie and especie not in CNAB400_BB_ESPECIES_VALIDAS:
+            if especie and especie not in CNAB400_ITAU_ESPECIES_VALIDAS:
                 avisos.append(
-                    f"Linha {numero_linha}: espécie '{especie}' não está na lista padrão do manual FEBRABAN; verifique."
+                    f"Linha {numero_linha}: espécie '{especie}' fora da lista de espécies do manual do Itaú para CNAB 400; verifique."
                 )
             aceite = _campo_cnab400(registro, 150, 150).strip().upper()
             if aceite not in {"A", "N"}:
